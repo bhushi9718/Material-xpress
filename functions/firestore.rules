@@ -1,0 +1,44 @@
+rules_version = "2";
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Products: world-readable base price, contractor price is server-only.
+    // The Functions service runs with admin privileges and may read the
+    // unredacted contractorPrice field. Clients should not query this field.
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if false;
+
+      match /contractor/{document=**} {
+        allow read, write: if false;
+      }
+    }
+
+    // Coupons are private; only Functions can read them.
+    match /coupons/{code} {
+      allow read, write: if false;
+    }
+
+    // Users can read their own profile (for role) but cannot mutate role
+    // from the client -- only an admin SDK should elevate roles.
+    match /users/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null && request.auth.uid == uid
+                    && request.resource.data.role == "customer";
+      allow update: if request.auth != null && request.auth.uid == uid
+                    && request.resource.data.role == resource.data.role
+                    && !("contractorVerified" in request.resource.data);
+      allow delete: if false;
+
+      match /priceQuotes/{quoteId} {
+        allow read: if request.auth != null && request.auth.uid == uid;
+        allow write: if false; // Functions only.
+      }
+    }
+
+    // Vendor collections stay locked down to authenticated vendor sessions.
+    match /cities/{cityId}/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

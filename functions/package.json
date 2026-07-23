@@ -1,0 +1,29 @@
+{
+  "name": "material-xpress-pricing-functions",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Firebase Cloud Functions for the Material Xpress B2B pricing engine.",
+  "main": "lib/index.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint --ext .ts src test",
+    "serve": "firebase emulators:start --only functions,firestore,auth"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "firebase-functions": "^4.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "@typescript-eslint/eslint-plugin": "^7.3.0",
+    "@typescript-eslint/parser": "^7.3.0",
+    "eslint": "^8.57.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.4.0"
+  }
+}

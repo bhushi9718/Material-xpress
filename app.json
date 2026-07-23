@@ -7,7 +7,7 @@
     "icon": "./assets/images/icon.png",
     "scheme": "myfirstapp",
     "userInterfaceStyle": "automatic",
-        "ios": {
+    "ios": {
       "supportsTablet": true
     },
     "android": {
@@ -17,7 +17,7 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-            "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "static",
@@ -39,7 +39,8 @@
       ],
       "expo-font",
       "expo-image",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true,
