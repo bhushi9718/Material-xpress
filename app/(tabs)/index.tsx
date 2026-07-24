@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import type { ComponentProps } from "react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Modal,
   SafeAreaView,
@@ -29,6 +29,8 @@ import {
 import { QuickOrderControls } from "@/components/quick-order";
 import { useCart } from "@/contexts/cartcontext";
 import { usePricing, useRoleBadge } from "@/contexts/pricing/pricing-context";
+import { Input } from "@/components/ui/Input";
+import { Card } from "@/components/ui/Card";
 
 function formatPriceForDisplay(productId: string, fallbackUnitPrice: string, quote: ReturnType<typeof usePricing>["quote"]) {
   const line = quote?.lines.find((entry) => entry.productId === productId);
@@ -50,17 +52,21 @@ export default function HomeScreen() {
   const [currentLocation, setCurrentLocation] = useState(savedLocations[0]);
   const [locationModalVisible, setLocationModalVisible] = useState(false);
 
-  const featuredProducts =
+  const featuredProducts = useMemo(() =>
     activeCategory === "all"
       ? products.slice(0, 6)
-      : products.filter((product) => product.categoryId === activeCategory);
+      : products.filter((product) => product.categoryId === activeCategory),
+    [activeCategory]
+  );
 
-  void requestQuote({
-    items: featuredProducts.map((product) => ({
-      productId: product.id,
-      quantity: quantitiesById[product.id] ?? 1,
-    })),
-  });
+  useEffect(() => {
+    void requestQuote({
+      items: featuredProducts.map((product) => ({
+        productId: product.id,
+        quantity: quantitiesById[product.id] ?? 1,
+      })),
+    });
+  }, [featuredProducts, quantitiesById, requestQuote]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -69,6 +75,7 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}>
         <View style={styles.headerRow}>
           <TouchableOpacity
+            activeOpacity={0.7}
             onPress={() => setLocationModalVisible(true)}
             style={styles.locationChip}>
             <Ionicons
@@ -89,7 +96,7 @@ export default function HomeScreen() {
             />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.iconButton}>
+          <TouchableOpacity activeOpacity={0.7} style={styles.iconButton}>
             <Ionicons
               color={materialTheme.colors.primary}
               name="notifications-outline"
@@ -114,20 +121,19 @@ export default function HomeScreen() {
         <Text style={styles.name}>Rajesh Kumar</Text>
         <Text style={styles.subheading}>What are you building today?</Text>
 
-        <TouchableOpacity
-          onPress={() => router.push("/search")}
-          style={styles.searchBar}>
-          <Ionicons
-            color={materialTheme.colors.textMuted}
-            name="search-outline"
-            size={18}
+        <TouchableOpacity activeOpacity={0.9} onPress={() => router.push("/search")}>
+          <Input
+            editable={false}
+            pointerEvents="none"
+            placeholder="Search hinges, locks, handles..."
+            containerStyle={styles.searchContainer}
+            leftIcon={<Ionicons color={materialTheme.colors.textMuted} name="search-outline" size={18} />}
+            rightIcon={
+              <View style={styles.searchVoice}>
+                <Ionicons color={materialTheme.colors.white} name="mic-outline" size={16} />
+              </View>
+            }
           />
-          <Text style={styles.searchPlaceholder}>
-            Search hinges, locks, handles...
-          </Text>
-          <View style={styles.searchVoice}>
-            <Ionicons color={materialTheme.colors.white} name="mic-outline" size={16} />
-          </View>
         </TouchableOpacity>
 
         <ScrollView
@@ -135,6 +141,7 @@ export default function HomeScreen() {
           contentContainerStyle={styles.categoryRow}
           showsHorizontalScrollIndicator={false}>
           <TouchableOpacity
+            activeOpacity={0.7}
             onPress={() => setActiveCategory("all")}
             style={[
               styles.categoryChip,
@@ -154,12 +161,13 @@ export default function HomeScreen() {
             return (
               <TouchableOpacity
                 key={category.id}
+                activeOpacity={0.7}
                 onPress={() => setActiveCategory(category.id)}
                 style={[
                   styles.categoryChip,
                   isActive && {
-                    backgroundColor: `${category.accent}18`,
-                    borderColor: category.accent,
+                    backgroundColor: `${category.accent}20`,
+                    borderColor: 'transparent',
                   },
                 ]}>
                 <Ionicons
@@ -194,38 +202,42 @@ export default function HomeScreen() {
               <Animated.View
                 key={product.id}
                 layout={LinearTransition.springify().damping(18).stiffness(220)}
-                style={styles.productCard}>
-                <View style={styles.productHeader}>
-                  <ProductIconBadge accent={product.accent} icon={product.icon} size={56} />
-                  {product.tag ? <Text style={styles.productTag}>{product.tag}</Text> : null}
-                </View>
+                style={styles.productCardWrapper}>
+                <Card style={styles.productCard}>
+                  <View style={styles.productHeader}>
+                    <ProductIconBadge accent={product.accent} icon={product.icon} size={56} />
+                    {product.tag ? <Text style={styles.productTag}>{product.tag}</Text> : null}
+                  </View>
 
-                <Text style={styles.productCategory}>{product.category}</Text>
-                <Text numberOfLines={2} style={styles.productName}>
-                  {product.name}
-                </Text>
-                <Text numberOfLines={2} style={styles.productSubtitle}>
-                  {product.subtitle}
-                </Text>
-                <Text style={styles.productPrice}>{primary}</Text>
-                {secondary ? (
-                  <Text style={styles.productPriceStrike}>{secondary}</Text>
-                ) : null}
+                  <Text style={styles.productCategory}>{product.category}</Text>
+                  <Text numberOfLines={2} style={styles.productName}>
+                    {product.name}
+                  </Text>
+                  <Text numberOfLines={2} style={styles.productSubtitle}>
+                    {product.subtitle}
+                  </Text>
+                  <Text style={styles.productPrice}>{primary}</Text>
+                  {secondary ? (
+                    <Text style={styles.productPriceStrike}>{secondary}</Text>
+                  ) : null}
 
-                <QuickOrderControls
-                  bulkOptions={[5, 10]}
-                  onAddOne={() => addToCart(product)}
-                  onBulkAdd={(amount) => addToCart(product, amount)}
-                  onDecrease={() => updateQuantity(product.id, quantity - 1)}
-                  onIncrease={() => updateQuantity(product.id, quantity + 1)}
-                  quantity={quantity}
-                />
+                  <View style={styles.spacer} />
+
+                  <QuickOrderControls
+                    bulkOptions={[5, 10]}
+                    onAddOne={() => addToCart(product)}
+                    onBulkAdd={(amount) => addToCart(product, amount)}
+                    onDecrease={() => updateQuantity(product.id, quantity - 1)}
+                    onIncrease={() => updateQuantity(product.id, quantity + 1)}
+                    quantity={quantity}
+                  />
+                </Card>
               </Animated.View>
             );
           })}
         </View>
 
-        <View style={styles.summaryCard}>
+        <Card style={styles.summaryCard}>
           <Text style={styles.summaryTitle}>Project-ready bundles</Text>
           <Text style={styles.summaryText}>
             Curated hinge, lock, and handle sets for wardrobes, kitchens, and site handovers.
@@ -235,7 +247,7 @@ export default function HomeScreen() {
             <MetricCard label="Bulk savings" value="12%" />
             <MetricCard label="Repeat orders" value="1 tap" />
           </View>
-        </View>
+        </Card>
       </ScrollView>
 
       <Modal
@@ -247,7 +259,7 @@ export default function HomeScreen() {
           <View style={styles.modalSheet}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Choose delivery point</Text>
-              <TouchableOpacity onPress={() => setLocationModalVisible(false)}>
+              <TouchableOpacity activeOpacity={0.7} onPress={() => setLocationModalVisible(false)}>
                 <Ionicons
                   color={materialTheme.colors.textMuted}
                   name="close"
@@ -259,6 +271,7 @@ export default function HomeScreen() {
             {savedLocations.map((location) => (
               <TouchableOpacity
                 key={location.id}
+                activeOpacity={0.7}
                 onPress={() => {
                   setCurrentLocation(location);
                   setLocationModalVisible(false);
@@ -300,25 +313,23 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: materialTheme.screenPadding,
-    paddingBottom: 36,
+    paddingBottom: materialTheme.spacing.xxxxl,
   },
   headerRow: {
     alignItems: "center",
     flexDirection: "row",
-    gap: 12,
+    gap: materialTheme.spacing.md,
     justifyContent: "space-between",
   },
   locationChip: {
     alignItems: "center",
     backgroundColor: materialTheme.colors.surface,
-    borderColor: materialTheme.colors.border,
     borderRadius: materialTheme.radius.pill,
-    borderWidth: 1,
     flex: 1,
     flexDirection: "row",
-    gap: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    gap: materialTheme.spacing.sm,
+    paddingHorizontal: materialTheme.spacing.md,
+    paddingVertical: materialTheme.spacing.md,
   },
   locationTextWrap: { flex: 1 },
   locationLabel: {
@@ -341,7 +352,7 @@ const styles = StyleSheet.create({
   greeting: {
     ...materialTheme.typography.h3,
     color: materialTheme.colors.textMuted,
-    marginTop: 18,
+    marginTop: materialTheme.spacing.lg,
   },
   name: {
     ...materialTheme.typography.display,
@@ -350,24 +361,10 @@ const styles = StyleSheet.create({
   subheading: {
     ...materialTheme.typography.body,
     color: materialTheme.colors.textMuted,
-    marginTop: 6,
+    marginTop: materialTheme.spacing.xs,
   },
-  searchBar: {
-    alignItems: "center",
-    backgroundColor: materialTheme.colors.surface,
-    borderColor: materialTheme.colors.border,
-    borderRadius: materialTheme.radius.pill,
-    borderWidth: 1,
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 18,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  searchPlaceholder: {
-    ...materialTheme.typography.body,
-    color: materialTheme.colors.textMuted,
-    flex: 1,
+  searchContainer: {
+    marginTop: materialTheme.spacing.lg,
   },
   searchVoice: {
     alignItems: "center",
@@ -379,23 +376,20 @@ const styles = StyleSheet.create({
   },
   categoryRow: {
     flexDirection: "row",
-    gap: 10,
-    paddingVertical: 14,
+    gap: materialTheme.spacing.sm,
+    paddingVertical: materialTheme.spacing.lg,
   },
   categoryChip: {
     alignItems: "center",
     backgroundColor: materialTheme.colors.surface,
-    borderColor: materialTheme.colors.border,
     borderRadius: materialTheme.radius.pill,
-    borderWidth: 1,
     flexDirection: "row",
-    gap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    gap: materialTheme.spacing.sm,
+    paddingHorizontal: materialTheme.spacing.lg,
+    paddingVertical: materialTheme.spacing.md,
   },
   categoryChipActive: {
     backgroundColor: materialTheme.colors.primary,
-    borderColor: materialTheme.colors.primary,
   },
   categoryChipText: {
     ...materialTheme.typography.caption,
@@ -408,24 +402,24 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    rowGap: 14,
+    rowGap: materialTheme.spacing.md,
+  },
+  productCardWrapper: {
+    width: "48.3%",
+    marginBottom: materialTheme.spacing.sm,
   },
   productCard: {
-    ...materialTheme.shadow,
-    backgroundColor: materialTheme.colors.surface,
-    borderRadius: materialTheme.radius.md,
-    marginBottom: 2,
-    padding: 16,
-    width: "48.3%",
+    flex: 1, // ensure card expands fully
+    padding: materialTheme.spacing.lg,
   },
   productHeader: {
     alignItems: "flex-start",
-    marginBottom: 14,
+    marginBottom: materialTheme.spacing.md,
   },
   productTag: {
     ...materialTheme.typography.caption,
     color: materialTheme.colors.terracotta,
-    marginTop: 10,
+    marginTop: materialTheme.spacing.sm,
   },
   productCategory: {
     ...materialTheme.typography.caption,
@@ -434,26 +428,32 @@ const styles = StyleSheet.create({
   productName: {
     ...materialTheme.typography.h3,
     color: materialTheme.colors.text,
-    marginTop: 6,
+    marginTop: materialTheme.spacing.xs,
   },
   productSubtitle: {
     ...materialTheme.typography.caption,
     color: materialTheme.colors.textMuted,
-    marginTop: 8,
+    marginTop: materialTheme.spacing.sm,
     minHeight: 32,
   },
   productPrice: {
     ...materialTheme.typography.label,
     color: materialTheme.colors.primary,
-    marginBottom: 14,
-    marginTop: 12,
+    marginBottom: materialTheme.spacing.md,
+    marginTop: materialTheme.spacing.md,
+  },
+  productPriceStrike: {
+    ...materialTheme.typography.caption,
+    color: materialTheme.colors.textMuted,
+    marginTop: -materialTheme.spacing.sm,
+    marginBottom: materialTheme.spacing.sm,
+    textDecorationLine: "line-through",
+  },
+  spacer: {
+    flex: 1,
   },
   summaryCard: {
-    ...materialTheme.shadow,
-    backgroundColor: materialTheme.colors.surface,
-    borderRadius: materialTheme.radius.lg,
-    marginTop: 24,
-    padding: 20,
+    marginTop: materialTheme.spacing.xxl,
   },
   summaryTitle: {
     ...materialTheme.typography.h2,
@@ -462,18 +462,18 @@ const styles = StyleSheet.create({
   summaryText: {
     ...materialTheme.typography.body,
     color: materialTheme.colors.textMuted,
-    marginTop: 8,
+    marginTop: materialTheme.spacing.sm,
   },
   summaryMetrics: {
     flexDirection: "row",
-    gap: 10,
-    marginTop: 18,
+    gap: materialTheme.spacing.sm,
+    marginTop: materialTheme.spacing.lg,
   },
   metricCard: {
     backgroundColor: materialTheme.colors.surfaceMuted,
     borderRadius: materialTheme.radius.md,
     flex: 1,
-    padding: 14,
+    padding: materialTheme.spacing.md,
   },
   metricValue: {
     ...materialTheme.typography.h3,
@@ -482,24 +482,24 @@ const styles = StyleSheet.create({
   metricLabel: {
     ...materialTheme.typography.caption,
     color: materialTheme.colors.textMuted,
-    marginTop: 6,
+    marginTop: materialTheme.spacing.xs,
   },
   modalOverlay: {
-    backgroundColor: "rgba(24, 33, 27, 0.28)",
+    backgroundColor: "rgba(15, 23, 42, 0.75)",
     flex: 1,
     justifyContent: "flex-end",
   },
   modalSheet: {
     backgroundColor: materialTheme.colors.surface,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    padding: 22,
+    borderTopLeftRadius: materialTheme.radius.lg,
+    borderTopRightRadius: materialTheme.radius.lg,
+    padding: materialTheme.spacing.xxl,
   },
   modalHeader: {
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 18,
+    marginBottom: materialTheme.spacing.lg,
   },
   modalTitle: {
     ...materialTheme.typography.h2,
@@ -511,7 +511,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 16,
+    paddingVertical: materialTheme.spacing.lg,
   },
   locationOptionLabel: {
     ...materialTheme.typography.h3,
@@ -520,7 +520,7 @@ const styles = StyleSheet.create({
   locationOptionValue: {
     ...materialTheme.typography.body,
     color: materialTheme.colors.textMuted,
-    marginTop: 4,
+    marginTop: materialTheme.spacing.xs,
     maxWidth: 260,
   },
   roleBanner: {
@@ -529,19 +529,13 @@ const styles = StyleSheet.create({
     backgroundColor: materialTheme.colors.primarySoft,
     borderRadius: materialTheme.radius.pill,
     flexDirection: "row",
-    gap: 8,
-    marginTop: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    gap: materialTheme.spacing.sm,
+    marginTop: materialTheme.spacing.md,
+    paddingHorizontal: materialTheme.spacing.md,
+    paddingVertical: materialTheme.spacing.sm,
   },
   roleBannerText: {
     ...materialTheme.typography.caption,
     color: materialTheme.colors.primary,
-  },
-  productPriceStrike: {
-    ...materialTheme.typography.caption,
-    color: materialTheme.colors.textMuted,
-    marginTop: -8,
-    textDecorationLine: "line-through",
   },
 });

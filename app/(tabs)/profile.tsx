@@ -11,13 +11,15 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 
 import { profileQuickLinks } from '@/constants/material-data';
 import { materialTheme } from '@/constants/material-theme';
+import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
 
 const STORAGE_KEY = '@material_xpress_profile';
 
@@ -93,7 +95,7 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.profileCard}>
+        <Card style={styles.profileCard}>
           <TouchableOpacity onPress={pickImage} style={styles.avatarWrap}>
             {imageUri ? (
               <Image source={{ uri: imageUri }} style={styles.avatarImage} />
@@ -115,40 +117,38 @@ export default function ProfileScreen() {
             <StatChip label="Saved" value="12" />
             <StatChip label="Wishlist" value="08" />
           </View>
-        </View>
+        </Card>
 
-        <View style={styles.formCard}>
+        <Card style={styles.formCard}>
           <Text style={styles.sectionTitle}>Account details</Text>
           <Text style={styles.sectionText}>
             Keep contact details updated for invoices and site delivery coordination.
           </Text>
 
           <Text style={styles.fieldLabel}>Full Name</Text>
-          <TextInput
+          <Input
             onChangeText={setName}
             placeholder="Your name"
-            placeholderTextColor={materialTheme.colors.textMuted}
-            style={styles.textInput}
             value={name}
           />
 
           <Text style={styles.fieldLabel}>Email Address</Text>
-          <TextInput
+          <Input
             autoCapitalize="none"
             keyboardType="email-address"
             onChangeText={setEmail}
             placeholder="name@example.com"
-            placeholderTextColor={materialTheme.colors.textMuted}
-            style={styles.textInput}
             value={email}
           />
 
-          <TouchableOpacity onPress={saveProfile} style={styles.primaryButton}>
-            <Text style={styles.primaryButtonText}>Save profile</Text>
-          </TouchableOpacity>
-        </View>
+          <Button
+            label="Save profile"
+            onPress={saveProfile}
+            style={{ marginTop: materialTheme.spacing.xl }}
+          />
+        </Card>
 
-        <View style={styles.menuCard}>
+        <Card style={styles.menuCard}>
           <TouchableOpacity
             onPress={() => router.push('/vendor')}
             style={styles.vendorPortalCard}>
@@ -187,12 +187,16 @@ export default function ProfileScreen() {
               />
             </TouchableOpacity>
           ))}
-        </View>
+        </Card>
 
-        <TouchableOpacity onPress={logout} style={styles.logoutButton}>
-          <Ionicons color={materialTheme.colors.danger} name="log-out-outline" size={18} />
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
+        <Button
+          label="Logout"
+          onPress={logout}
+          icon={<Ionicons color={materialTheme.colors.danger} name="log-out-outline" size={18} />}
+          variant="outline"
+          style={styles.logoutButton}
+          labelStyle={{ color: materialTheme.colors.danger }}
+        />
       </ScrollView>
     </SafeAreaView>
   );
@@ -214,17 +218,14 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: materialTheme.screenPadding,
-    paddingBottom: 32,
+    paddingBottom: materialTheme.spacing.xxxl,
   },
   profileCard: {
-    ...materialTheme.shadow,
     alignItems: 'center',
-    backgroundColor: materialTheme.colors.surface,
-    borderRadius: materialTheme.radius.lg,
-    padding: 24,
+    padding: materialTheme.spacing.xxl,
   },
   avatarWrap: {
-    marginBottom: 14,
+    marginBottom: materialTheme.spacing.md,
     position: 'relative',
   },
   avatarImage: {
@@ -262,19 +263,19 @@ const styles = StyleSheet.create({
   email: {
     ...materialTheme.typography.body,
     color: materialTheme.colors.textMuted,
-    marginTop: 6,
+    marginTop: materialTheme.spacing.xs,
   },
   statsRow: {
     flexDirection: 'row',
-    gap: 10,
-    marginTop: 20,
+    gap: materialTheme.spacing.sm,
+    marginTop: materialTheme.spacing.xl,
   },
   statChip: {
     backgroundColor: materialTheme.colors.surfaceMuted,
     borderRadius: materialTheme.radius.md,
     flex: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: materialTheme.spacing.lg,
+    paddingVertical: materialTheme.spacing.md,
   },
   statValue: {
     ...materialTheme.typography.h3,
@@ -284,31 +285,25 @@ const styles = StyleSheet.create({
   statLabel: {
     ...materialTheme.typography.caption,
     color: materialTheme.colors.textMuted,
-    marginTop: 6,
+    marginTop: materialTheme.spacing.xs,
     textAlign: 'center',
   },
   formCard: {
-    ...materialTheme.shadow,
-    backgroundColor: materialTheme.colors.surface,
-    borderRadius: materialTheme.radius.lg,
-    marginTop: 18,
-    padding: 20,
+    marginTop: materialTheme.spacing.lg,
+    padding: materialTheme.spacing.lg,
   },
   menuCard: {
-    ...materialTheme.shadow,
-    backgroundColor: materialTheme.colors.surface,
-    borderRadius: materialTheme.radius.lg,
-    marginTop: 18,
-    padding: 20,
+    marginTop: materialTheme.spacing.lg,
+    padding: materialTheme.spacing.lg,
   },
   vendorPortalCard: {
     alignItems: 'center',
     backgroundColor: materialTheme.colors.primary,
     borderRadius: materialTheme.radius.lg,
     flexDirection: 'row',
-    gap: 14,
-    marginBottom: 18,
-    padding: 18,
+    gap: materialTheme.spacing.md,
+    marginBottom: materialTheme.spacing.lg,
+    padding: materialTheme.spacing.lg,
   },
   vendorPortalIcon: {
     alignItems: 'center',
@@ -337,34 +332,13 @@ const styles = StyleSheet.create({
   sectionText: {
     ...materialTheme.typography.body,
     color: materialTheme.colors.textMuted,
-    marginTop: 6,
+    marginTop: materialTheme.spacing.xs,
   },
   fieldLabel: {
     ...materialTheme.typography.label,
     color: materialTheme.colors.text,
-    marginBottom: 8,
-    marginTop: 18,
-  },
-  textInput: {
-    ...materialTheme.typography.body,
-    backgroundColor: materialTheme.colors.white,
-    borderColor: materialTheme.colors.border,
-    borderRadius: materialTheme.radius.md,
-    borderWidth: 1,
-    color: materialTheme.colors.text,
-    paddingHorizontal: 16,
-    paddingVertical: 15,
-  },
-  primaryButton: {
-    alignItems: 'center',
-    backgroundColor: materialTheme.colors.primary,
-    borderRadius: materialTheme.radius.md,
-    marginTop: 22,
-    paddingVertical: 15,
-  },
-  primaryButtonText: {
-    ...materialTheme.typography.label,
-    color: materialTheme.colors.white,
+    marginBottom: materialTheme.spacing.sm,
+    marginTop: materialTheme.spacing.lg,
   },
   menuItem: {
     alignItems: 'center',
@@ -372,13 +346,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 16,
+    paddingVertical: materialTheme.spacing.lg,
   },
   menuItemLeft: {
     alignItems: 'center',
     flexDirection: 'row',
     flex: 1,
-    gap: 12,
+    gap: materialTheme.spacing.md,
   },
   menuIcon: {
     alignItems: 'center',
@@ -401,17 +375,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   logoutButton: {
-    alignItems: 'center',
-    backgroundColor: materialTheme.colors.surface,
-    borderRadius: materialTheme.radius.md,
-    flexDirection: 'row',
-    gap: 8,
-    justifyContent: 'center',
-    marginTop: 18,
-    paddingVertical: 16,
-  },
-  logoutText: {
-    ...materialTheme.typography.label,
-    color: materialTheme.colors.danger,
+    borderColor: materialTheme.colors.danger,
+    marginTop: materialTheme.spacing.lg,
   },
 });

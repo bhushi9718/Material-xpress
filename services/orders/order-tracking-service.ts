@@ -250,7 +250,7 @@ export function getTrackingCityMeta(cityId: string): TrackingCityMeta {
 }
 
 function subscribeToMockTracking({
-  cityId,
+  cityId = DEFAULT_TRACKING_CITY_ID,
   onUpdate,
 }: Pick<SubscribeToTrackedOrdersParams, 'cityId' | 'onUpdate'>) {
   const cityMeta = getTrackingCityMeta(cityId);

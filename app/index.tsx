@@ -6,16 +6,16 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 
 import { materialTheme } from '@/constants/material-theme';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 
 type AuthMode = 'login' | 'signup';
 
@@ -205,14 +205,13 @@ export default function AuthScreen() {
                   value={loginPassword}
                 />
 
-                <TouchableOpacity style={styles.primaryButton} onPress={handleLogin}>
-                  <Text style={styles.primaryButtonText}>Login</Text>
-                  <Ionicons
-                    color={materialTheme.colors.white}
-                    name="arrow-forward"
-                    size={18}
-                  />
-                </TouchableOpacity>
+                <Button
+                  label="Login"
+                  onPress={handleLogin}
+                  icon={<Ionicons color={materialTheme.colors.white} name="arrow-forward" size={18} />}
+                  iconPosition="right"
+                  style={{ marginTop: materialTheme.spacing.xl }}
+                />
 
                 <Text style={styles.helperText}>
                   Demo OTP auto-fills after tapping Send OTP.
@@ -226,11 +225,9 @@ export default function AuthScreen() {
                 </Text>
 
                 <FieldLabel label="Full Name" />
-                <TextInput
+                <Input
                   onChangeText={setSignupName}
                   placeholder="Rahul Kumar"
-                  placeholderTextColor={materialTheme.colors.textMuted}
-                  style={styles.textInput}
                   value={signupName}
                 />
 
@@ -252,14 +249,13 @@ export default function AuthScreen() {
                   value={signupPassword}
                 />
 
-                <TouchableOpacity style={styles.primaryButton} onPress={handleSignup}>
-                  <Text style={styles.primaryButtonText}>Create Account</Text>
-                  <Ionicons
-                    color={materialTheme.colors.white}
-                    name="checkmark"
-                    size={18}
-                  />
-                </TouchableOpacity>
+                <Button
+                  label="Create Account"
+                  onPress={handleSignup}
+                  icon={<Ionicons color={materialTheme.colors.white} name="checkmark" size={18} />}
+                  iconPosition="right"
+                  style={{ marginTop: materialTheme.spacing.xl }}
+                />
               </>
             )}
           </View>
@@ -281,21 +277,19 @@ function PhoneField({
   onChangeText: (value: string) => void;
 }) {
   return (
-    <View style={styles.compoundField}>
-      <View style={styles.leadingSegment}>
-        <Ionicons color={materialTheme.colors.primary} name="call-outline" size={18} />
-        <Text style={styles.leadingSegmentText}>+91</Text>
-      </View>
-      <TextInput
-        keyboardType="number-pad"
-        maxLength={10}
-        onChangeText={onChangeText}
-        placeholder="9876543210"
-        placeholderTextColor={materialTheme.colors.textMuted}
-        style={styles.compoundInput}
-        value={value}
-      />
-    </View>
+    <Input
+      keyboardType="number-pad"
+      maxLength={10}
+      onChangeText={onChangeText}
+      placeholder="9876543210"
+      value={value}
+      leftIcon={
+        <View style={styles.phonePrefixContainer}>
+          <Ionicons color={materialTheme.colors.primary} name="call-outline" size={18} />
+          <Text style={styles.phonePrefixText}>+91</Text>
+        </View>
+      }
+    />
   );
 }
 
@@ -310,18 +304,15 @@ function OtpRow({
 }) {
   return (
     <View style={styles.otpRow}>
-      <TextInput
+      <Input
+        containerStyle={styles.otpInput}
         keyboardType="number-pad"
         maxLength={6}
         onChangeText={onChangeText}
         placeholder="Enter 6-digit OTP"
-        placeholderTextColor={materialTheme.colors.textMuted}
-        style={[styles.textInput, styles.otpInput]}
         value={value}
       />
-      <TouchableOpacity onPress={onSend} style={styles.secondaryButton}>
-        <Text style={styles.secondaryButtonText}>Send OTP</Text>
-      </TouchableOpacity>
+      <Button label="Send OTP" onPress={onSend} variant="secondary" />
     </View>
   );
 }
@@ -338,26 +329,22 @@ function PasswordField({
   onToggleVisibility: () => void;
 }) {
   return (
-    <View style={styles.compoundField}>
-      <View style={styles.leadingSegment}>
-        <Ionicons color={materialTheme.colors.primary} name="lock-closed-outline" size={18} />
-      </View>
-      <TextInput
-        onChangeText={onChangeText}
-        placeholder="Enter your password"
-        placeholderTextColor={materialTheme.colors.textMuted}
-        secureTextEntry={secureTextEntry}
-        style={styles.compoundInput}
-        value={value}
-      />
-      <TouchableOpacity onPress={onToggleVisibility} style={styles.trailingButton}>
-        <Ionicons
-          color={materialTheme.colors.textMuted}
-          name={secureTextEntry ? 'eye-outline' : 'eye-off-outline'}
-          size={18}
-        />
-      </TouchableOpacity>
-    </View>
+    <Input
+      onChangeText={onChangeText}
+      placeholder="Enter your password"
+      secureTextEntry={secureTextEntry}
+      value={value}
+      leftIcon={<Ionicons color={materialTheme.colors.primary} name="lock-closed-outline" size={18} />}
+      rightIcon={
+        <TouchableOpacity onPress={onToggleVisibility}>
+          <Ionicons
+            color={materialTheme.colors.textMuted}
+            name={secureTextEntry ? 'eye-outline' : 'eye-off-outline'}
+            size={18}
+          />
+        </TouchableOpacity>
+      }
+    />
   );
 }
 
@@ -373,7 +360,6 @@ const styles = StyleSheet.create({
     backgroundColor: materialTheme.colors.accentSoft,
     borderRadius: 220,
     height: 220,
-    opacity: 0.8,
     position: 'absolute',
     right: -80,
     top: -40,
@@ -385,26 +371,25 @@ const styles = StyleSheet.create({
     bottom: 80,
     height: 180,
     left: -60,
-    opacity: 0.7,
     position: 'absolute',
     width: 180,
   },
   scrollContent: {
     padding: materialTheme.screenPadding,
-    paddingBottom: 32,
+    paddingBottom: materialTheme.spacing.xxxl,
   },
   heroCard: {
     ...materialTheme.shadow,
     backgroundColor: materialTheme.colors.surface,
     borderRadius: materialTheme.radius.lg,
-    marginTop: 12,
-    padding: 24,
+    marginTop: materialTheme.spacing.md,
+    padding: materialTheme.spacing.xxl,
   },
   logoMark: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: 10,
-    marginBottom: 18,
+    marginBottom: materialTheme.spacing.lg,
   },
   logoRail: {
     backgroundColor: materialTheme.colors.primary,
@@ -425,19 +410,19 @@ const styles = StyleSheet.create({
   tagline: {
     ...materialTheme.typography.body,
     color: materialTheme.colors.textMuted,
-    marginTop: 10,
+    marginTop: materialTheme.spacing.sm,
   },
   heroHighlights: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
-    marginTop: 22,
+    marginTop: materialTheme.spacing.xl,
   },
   highlightChip: {
     backgroundColor: materialTheme.colors.surfaceMuted,
     borderRadius: materialTheme.radius.pill,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingHorizontal: materialTheme.spacing.sm,
+    paddingVertical: materialTheme.spacing.xs,
   },
   highlightChipText: {
     ...materialTheme.typography.caption,
@@ -447,8 +432,8 @@ const styles = StyleSheet.create({
     ...materialTheme.shadow,
     backgroundColor: materialTheme.colors.surface,
     borderRadius: materialTheme.radius.lg,
-    marginTop: 20,
-    padding: 20,
+    marginTop: materialTheme.spacing.xl,
+    padding: materialTheme.spacing.xl,
   },
   authToggle: {
     backgroundColor: materialTheme.colors.surfaceMuted,
@@ -460,14 +445,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: materialTheme.radius.pill,
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: materialTheme.spacing.md,
   },
   authToggleButtonActive: {
     backgroundColor: materialTheme.colors.primary,
   },
   authToggleText: {
     ...materialTheme.typography.label,
-    color: materialTheme.colors.primary,
+    color: materialTheme.colors.text,
   },
   authToggleTextActive: {
     color: materialTheme.colors.white,
@@ -475,100 +460,43 @@ const styles = StyleSheet.create({
   sectionTitle: {
     ...materialTheme.typography.h2,
     color: materialTheme.colors.text,
-    marginTop: 20,
+    marginTop: materialTheme.spacing.xl,
   },
   sectionText: {
     ...materialTheme.typography.body,
     color: materialTheme.colors.textMuted,
-    marginTop: 6,
+    marginTop: materialTheme.spacing.xs,
   },
   fieldLabel: {
     ...materialTheme.typography.label,
     color: materialTheme.colors.text,
-    marginBottom: 8,
-    marginTop: 18,
+    marginBottom: materialTheme.spacing.sm,
+    marginTop: materialTheme.spacing.lg,
   },
-  textInput: {
-    ...materialTheme.typography.body,
-    backgroundColor: materialTheme.colors.white,
-    borderColor: materialTheme.colors.border,
-    borderRadius: materialTheme.radius.md,
-    borderWidth: 1,
-    color: materialTheme.colors.text,
-    paddingHorizontal: 16,
-    paddingVertical: 15,
-  },
-  compoundField: {
+  otpRow: {
     alignItems: 'center',
-    backgroundColor: materialTheme.colors.white,
-    borderColor: materialTheme.colors.border,
-    borderRadius: materialTheme.radius.md,
-    borderWidth: 1,
     flexDirection: 'row',
-    overflow: 'hidden',
+    gap: materialTheme.spacing.md,
   },
-  leadingSegment: {
+  otpInput: {
+    flex: 1,
+  },
+  phonePrefixContainer: {
     alignItems: 'center',
     borderRightColor: materialTheme.colors.border,
     borderRightWidth: 1,
     flexDirection: 'row',
     gap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 15,
+    paddingRight: materialTheme.spacing.sm,
   },
-  leadingSegmentText: {
+  phonePrefixText: {
     ...materialTheme.typography.body,
     color: materialTheme.colors.primary,
-  },
-  compoundInput: {
-    ...materialTheme.typography.body,
-    color: materialTheme.colors.text,
-    flex: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 15,
-  },
-  otpRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 10,
-  },
-  otpInput: {
-    flex: 1,
-  },
-  secondaryButton: {
-    alignItems: 'center',
-    backgroundColor: materialTheme.colors.accentSoft,
-    borderRadius: materialTheme.radius.md,
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 15,
-  },
-  secondaryButtonText: {
-    ...materialTheme.typography.label,
-    color: materialTheme.colors.primary,
-  },
-  trailingButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 15,
-  },
-  primaryButton: {
-    alignItems: 'center',
-    backgroundColor: materialTheme.colors.primary,
-    borderRadius: materialTheme.radius.md,
-    flexDirection: 'row',
-    gap: 8,
-    justifyContent: 'center',
-    marginTop: 24,
-    paddingVertical: 16,
-  },
-  primaryButtonText: {
-    ...materialTheme.typography.h3,
-    color: materialTheme.colors.white,
   },
   helperText: {
     ...materialTheme.typography.caption,
     color: materialTheme.colors.textMuted,
-    marginTop: 14,
+    marginTop: materialTheme.spacing.md,
     textAlign: 'center',
   },
 });

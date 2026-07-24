@@ -11,13 +11,13 @@ import {
 import {
   LiveOrderTrackingCard,
   OrderHistoryCard,
-  orderTrackingPalette,
 } from '@/components/order-tracking';
 import { materialTheme } from '@/constants/material-theme';
 import { useOrderReorder } from '@/hooks/use-order-reorder';
 import { useLiveOrderTracking } from '@/hooks/use-live-order-tracking';
 import { getOrderReorderSummary } from '@/services/orders/reorder-service';
 import { isOrderActive } from '@/services/orders/order-tracking-service';
+import { Card } from '@/components/ui/Card';
 
 export default function OrdersScreen() {
   const {
@@ -50,7 +50,7 @@ export default function OrdersScreen() {
           </View>
           <View style={styles.cityChip}>
             <Ionicons
-              color={orderTrackingPalette.liveGlow}
+              color={materialTheme.colors.success}
               name="location-outline"
               size={14}
             />
@@ -62,7 +62,7 @@ export default function OrdersScreen() {
           Follow each dispatch milestone, rider handoff, and delivery ETA from the existing orders flow.
         </Text>
 
-        <View style={styles.snapshotCard}>
+        <Card style={styles.snapshotCard}>
           <View style={styles.snapshotMetric}>
             <Text style={styles.snapshotValue}>{String(orders.length).padStart(2, '0')}</Text>
             <Text style={styles.snapshotLabel}>Recent jobs</Text>
@@ -75,26 +75,26 @@ export default function OrdersScreen() {
             <Text style={styles.snapshotValue}>{String(completedOrdersCount).padStart(2, '0')}</Text>
             <Text style={styles.snapshotLabel}>Delivered</Text>
           </View>
-        </View>
+        </Card>
 
         {errorMessage ? (
-          <View style={styles.noticeCard}>
+          <Card style={styles.noticeCard}>
             <Ionicons
-              color={orderTrackingPalette.warning}
+              color={materialTheme.colors.terracotta}
               name="warning-outline"
               size={18}
             />
             <Text style={styles.noticeText}>
               Firebase sync is unavailable right now, so the screen is showing the local live preview stream.
             </Text>
-          </View>
+          </Card>
         ) : null}
 
         {isLoading ? (
-          <View style={styles.loadingCard}>
-            <ActivityIndicator color={orderTrackingPalette.liveGlow} />
+          <Card style={styles.loadingCard}>
+            <ActivityIndicator color={materialTheme.colors.primary} />
             <Text style={styles.loadingText}>Syncing order tracking feed...</Text>
-          </View>
+          </Card>
         ) : null}
 
         {activeOrder ? (
@@ -105,9 +105,9 @@ export default function OrdersScreen() {
             source={source}
           />
         ) : (
-          <View style={styles.idleCard}>
+          <Card style={styles.idleCard}>
             <Ionicons
-              color={orderTrackingPalette.liveGlow}
+              color={materialTheme.colors.success}
               name="checkmark-done-outline"
               size={22}
             />
@@ -115,7 +115,7 @@ export default function OrdersScreen() {
             <Text style={styles.idleText}>
               Your recent orders are complete. Reorder any bundle below to trigger a new tracked dispatch.
             </Text>
-          </View>
+          </Card>
         )}
 
         <View style={styles.sectionHeader}>
@@ -139,12 +139,12 @@ export default function OrdersScreen() {
         ))}
 
         {!activeOrder && historicalOrders.length === 0 && !isLoading ? (
-          <View style={styles.emptyCard}>
+          <Card style={styles.emptyCard}>
             <Text style={styles.emptyTitle}>No orders yet</Text>
             <Text style={styles.emptyText}>
               New city rollouts can plug into the same tracking architecture once orders start syncing here.
             </Text>
-          </View>
+          </Card>
         ) : null}
       </ScrollView>
     </SafeAreaView>
@@ -153,50 +153,46 @@ export default function OrdersScreen() {
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: orderTrackingPalette.background,
+    backgroundColor: materialTheme.colors.background,
     flex: 1,
   },
   content: {
     padding: materialTheme.screenPadding,
-    paddingBottom: 32,
+    paddingBottom: materialTheme.spacing.xxxl,
   },
   cityChip: {
     alignItems: 'center',
-    backgroundColor: '#101A17',
-    borderColor: orderTrackingPalette.border,
+    backgroundColor: materialTheme.colors.surfaceMuted,
+    borderColor: materialTheme.colors.border,
     borderRadius: materialTheme.radius.pill,
     borderWidth: 1,
     flexDirection: 'row',
     gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
+    paddingHorizontal: materialTheme.spacing.md,
+    paddingVertical: materialTheme.spacing.sm,
   },
   cityChipText: {
     ...materialTheme.typography.caption,
-    color: orderTrackingPalette.text,
+    color: materialTheme.colors.text,
   },
   emptyCard: {
     alignItems: 'center',
-    backgroundColor: '#0D1714',
-    borderColor: orderTrackingPalette.border,
-    borderRadius: materialTheme.radius.lg,
-    borderWidth: 1,
-    marginTop: 18,
-    padding: 24,
+    marginTop: materialTheme.spacing.lg,
+    padding: materialTheme.spacing.xxl,
   },
   emptyText: {
     ...materialTheme.typography.body,
-    color: orderTrackingPalette.muted,
-    marginTop: 8,
+    color: materialTheme.colors.textMuted,
+    marginTop: materialTheme.spacing.sm,
     textAlign: 'center',
   },
   emptyTitle: {
     ...materialTheme.typography.h3,
-    color: orderTrackingPalette.text,
+    color: materialTheme.colors.text,
   },
   eyebrow: {
     ...materialTheme.typography.caption,
-    color: orderTrackingPalette.liveGlow,
+    color: materialTheme.colors.success,
     textTransform: 'uppercase',
   },
   header: {
@@ -206,98 +202,84 @@ const styles = StyleSheet.create({
   },
   idleCard: {
     alignItems: 'center',
-    backgroundColor: '#0D1714',
-    borderColor: orderTrackingPalette.border,
-    borderRadius: materialTheme.radius.lg,
-    borderWidth: 1,
-    marginTop: 22,
-    padding: 24,
+    marginTop: materialTheme.spacing.xl,
+    padding: materialTheme.spacing.xxl,
   },
   idleText: {
     ...materialTheme.typography.body,
-    color: orderTrackingPalette.muted,
-    marginTop: 8,
+    color: materialTheme.colors.textMuted,
+    marginTop: materialTheme.spacing.sm,
     textAlign: 'center',
   },
   idleTitle: {
     ...materialTheme.typography.h3,
-    color: orderTrackingPalette.text,
-    marginTop: 12,
+    color: materialTheme.colors.text,
+    marginTop: materialTheme.spacing.md,
   },
   loadingCard: {
     alignItems: 'center',
-    backgroundColor: '#0D1714',
-    borderColor: orderTrackingPalette.border,
-    borderRadius: materialTheme.radius.lg,
-    borderWidth: 1,
     flexDirection: 'row',
-    gap: 12,
-    marginTop: 18,
-    padding: 18,
+    gap: materialTheme.spacing.md,
+    marginTop: materialTheme.spacing.lg,
+    padding: materialTheme.spacing.lg,
   },
   loadingText: {
     ...materialTheme.typography.body,
-    color: orderTrackingPalette.text,
+    color: materialTheme.colors.text,
     flex: 1,
   },
   noticeCard: {
     alignItems: 'center',
-    backgroundColor: '#171207',
-    borderColor: '#3D2F14',
-    borderRadius: materialTheme.radius.md,
+    borderColor: materialTheme.colors.terracotta,
     borderWidth: 1,
     flexDirection: 'row',
-    gap: 10,
-    marginTop: 18,
-    padding: 14,
+    gap: materialTheme.spacing.sm,
+    marginTop: materialTheme.spacing.lg,
+    padding: materialTheme.spacing.md,
   },
   noticeText: {
     ...materialTheme.typography.caption,
-    color: '#F1D38B',
+    color: materialTheme.colors.terracotta,
     flex: 1,
   },
   sectionCaption: {
     ...materialTheme.typography.caption,
-    color: orderTrackingPalette.muted,
-    marginTop: 4,
+    color: materialTheme.colors.textMuted,
+    marginTop: materialTheme.spacing.xs,
   },
   sectionHeader: {
-    marginTop: 24,
+    marginTop: materialTheme.spacing.xxl,
   },
   sectionTitle: {
     ...materialTheme.typography.h3,
-    color: orderTrackingPalette.text,
+    color: materialTheme.colors.text,
   },
   title: {
     ...materialTheme.typography.h1,
-    color: orderTrackingPalette.text,
-    marginTop: 4,
+    color: materialTheme.colors.text,
+    marginTop: materialTheme.spacing.xs,
   },
   subtitle: {
     ...materialTheme.typography.body,
-    color: orderTrackingPalette.muted,
-    marginTop: 10,
+    color: materialTheme.colors.textMuted,
+    marginTop: materialTheme.spacing.md,
   },
   snapshotCard: {
-    backgroundColor: '#0D1714',
-    borderColor: orderTrackingPalette.border,
-    borderRadius: materialTheme.radius.lg,
-    borderWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20,
-    padding: 18,
+    marginTop: materialTheme.spacing.xl,
+    padding: materialTheme.spacing.lg,
   },
   snapshotMetric: {
     flex: 1,
   },
   snapshotValue: {
     ...materialTheme.typography.h2,
-    color: orderTrackingPalette.text,
+    color: materialTheme.colors.text,
   },
   snapshotLabel: {
     ...materialTheme.typography.caption,
-    color: orderTrackingPalette.muted,
-    marginTop: 6,
+    color: materialTheme.colors.textMuted,
+    marginTop: materialTheme.spacing.sm,
   },
 });

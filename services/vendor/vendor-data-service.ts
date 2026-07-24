@@ -652,7 +652,7 @@ function buildInitialPreviewProducts(session: VendorSession) {
   ];
 }
 
-function buildInitialPreviewOrders(session: VendorSession) {
+function buildInitialPreviewOrders(session: VendorSession): VendorOrder[] {
   return [
     {
       cityId: session.cityId,

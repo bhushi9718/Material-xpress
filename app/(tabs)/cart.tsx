@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -9,7 +9,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -32,7 +31,11 @@ import { usePricing, useRoleBadge } from '@/contexts/pricing/pricing-context';
 import {
   buildWhatsAppOrderMessage,
   openWhatsAppOrder,
+  type OpenWhatsAppOrderResult,
 } from '@/services/order/whatsapp-order';
+import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
 
 const FREE_DELIVERY_TARGET = 2000;
 
@@ -64,11 +67,13 @@ export default function CartScreen() {
   const [dismissedReorderNoticeKey, setDismissedReorderNoticeKey] = useState<string | null>(null);
   const [loadingLocation, setLoadingLocation] = useState(false);
 
-  if (cartItems.length > 0) {
-    void requestQuote({
-      items: cartItems.map((item) => ({ productId: item.id, quantity: item.quantity })),
-    });
-  }
+  useEffect(() => {
+    if (cartItems.length > 0) {
+      void requestQuote({
+        items: cartItems.map((item) => ({ productId: item.id, quantity: item.quantity })),
+      });
+    }
+  }, [cartItems, requestQuote]);
 
   const quoteSubtotal = quote?.subtotal ?? subtotal;
   const quoteGrandTotal = quote?.grandTotal ?? subtotal;
@@ -197,15 +202,7 @@ export default function CartScreen() {
       total: orderTotal,
     });
 
-    const orderResult = await openWhatsAppOrder({ message });
-
-    if (orderResult === 'missing-number') {
-      Alert.alert(
-        'WhatsApp ordering unavailable',
-        'Add EXPO_PUBLIC_MATERIAL_XPRESS_WHATSAPP_NUMBER to enable direct WhatsApp orders.'
-      );
-      return;
-    }
+    const orderResult: OpenWhatsAppOrderResult = await openWhatsAppOrder({ message });
 
     if (orderResult === 'unavailable') {
       Alert.alert(
@@ -231,7 +228,7 @@ export default function CartScreen() {
         </View>
 
         {cartItems.length === 0 ? (
-          <View style={styles.emptyCard}>
+          <Card style={styles.emptyCard}>
             <View style={styles.emptyIcon}>
               <Ionicons
                 color={materialTheme.colors.primary}
@@ -243,16 +240,16 @@ export default function CartScreen() {
             <Text style={styles.emptyText}>
               Add hardware from search or featured picks to start a new order.
             </Text>
-            <TouchableOpacity
+            <Button
+              label="Browse products"
               onPress={() => router.push('/search')}
-              style={styles.primaryButton}>
-              <Text style={styles.primaryButtonText}>Browse products</Text>
-            </TouchableOpacity>
-          </View>
+              style={{ marginTop: materialTheme.spacing.lg }}
+            />
+          </Card>
         ) : (
           <>
             {showReorderNotice ? (
-              <View style={styles.reorderNoticeCard}>
+              <Card style={styles.reorderNoticeCard}>
                 <View style={styles.reorderNoticeHeader}>
                   <View style={styles.reorderNoticeTitleRow}>
                     <View style={styles.reorderNoticeIcon}>
@@ -278,7 +275,7 @@ export default function CartScreen() {
                   </TouchableOpacity>
                 </View>
                 <Text style={styles.reorderNoticeCaption}>{reorderNoticeCaption}</Text>
-              </View>
+              </Card>
             ) : null}
 
             <View style={styles.progressCard}>
@@ -304,77 +301,71 @@ export default function CartScreen() {
                 exiting={FadeOutLeft.duration(160)}
                 key={item.id}
                 layout={LinearTransition.springify().damping(18).stiffness(220)}
-                style={styles.cartCard}>
-                <View style={styles.cartCardTop}>
-                  <ProductIconBadge accent={item.accent} icon={item.icon} size={52} />
-                  <View style={styles.cartInfo}>
-                    <Text style={styles.cartName}>{item.name}</Text>
-                    <Text style={styles.cartMeta}>
-                      {formatCurrency(linePrice)} / {item.unit}
+                style={styles.cartCardWrapper}>
+                <Card style={styles.cartCard}>
+                  <View style={styles.cartCardTop}>
+                    <ProductIconBadge accent={item.accent} icon={item.icon} size={52} />
+                    <View style={styles.cartInfo}>
+                      <Text style={styles.cartName}>{item.name}</Text>
+                      <Text style={styles.cartMeta}>
+                        {formatCurrency(linePrice)} / {item.unit}
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => removeFromCart(item.id)}
+                      style={styles.removeButton}>
+                      <Ionicons
+                        color={materialTheme.colors.textMuted}
+                        name="trash-outline"
+                        size={18}
+                      />
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.cartTotalsRow}>
+                    <View style={styles.cartTotalChip}>
+                      <Text style={styles.cartTotalChipText}>
+                        {item.quantity} x {formatCurrency(linePrice)}
+                      </Text>
+                    </View>
+                    <Text style={styles.lineTotal}>
+                      {formatCurrency(lineTotal)}
                     </Text>
                   </View>
-                  <TouchableOpacity
-                    onPress={() => removeFromCart(item.id)}
-                    style={styles.removeButton}>
-                    <Ionicons
-                      color={materialTheme.colors.textMuted}
-                      name="trash-outline"
-                      size={18}
-                    />
-                  </TouchableOpacity>
-                </View>
 
-                <View style={styles.cartTotalsRow}>
-                  <View style={styles.cartTotalChip}>
-                    <Text style={styles.cartTotalChipText}>
-                      {item.quantity} x {formatCurrency(linePrice)}
-                    </Text>
-                  </View>
-                  <Text style={styles.lineTotal}>
-                    {formatCurrency(lineTotal)}
-                  </Text>
-                </View>
-
-                <CartQuantityEditor
-                  bulkOptions={[5, 10]}
-                  onBulkAdd={(amount) => addToCart(item, amount)}
-                  onCommitQuantity={(amount) => updateQuantity(item.id, amount)}
-                  onDecrease={() => updateQuantity(item.id, item.quantity - 1)}
-                  onIncrease={() => updateQuantity(item.id, item.quantity + 1)}
-                  quantity={item.quantity}
-                />
+                  <CartQuantityEditor
+                    bulkOptions={[5, 10]}
+                    onBulkAdd={(amount) => addToCart(item, amount)}
+                    onCommitQuantity={(amount) => updateQuantity(item.id, amount)}
+                    onDecrease={() => updateQuantity(item.id, item.quantity - 1)}
+                    onIncrease={() => updateQuantity(item.id, item.quantity + 1)}
+                    quantity={item.quantity}
+                  />
+                </Card>
               </Animated.View>
               );
             })}
 
-            <View style={styles.sectionCard}>
+            <Card style={styles.sectionCard}>
               <Text style={styles.sectionTitle}>Delivery address</Text>
-              <TouchableOpacity onPress={getCurrentLocation} style={styles.locationButton}>
-                {loadingLocation ? (
-                  <ActivityIndicator color={materialTheme.colors.white} />
-                ) : (
-                  <>
-                    <Ionicons
-                      color={materialTheme.colors.white}
-                      name="locate-outline"
-                      size={16}
-                    />
-                    <Text style={styles.locationButtonText}>Use current location</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-              <TextInput
+              <Button
+                label="Use current location"
+                onPress={getCurrentLocation}
+                loading={loadingLocation}
+                icon={<Ionicons color={materialTheme.colors.white} name="locate-outline" size={16} />}
+                style={{ marginTop: materialTheme.spacing.md }}
+              />
+              <Input
                 multiline
                 onChangeText={setAddress}
                 placeholder="Enter complete delivery address"
-                placeholderTextColor={materialTheme.colors.textMuted}
-                style={styles.addressInput}
-                textAlignVertical="top"
+                containerStyle={{ marginTop: materialTheme.spacing.md }}
+                style={{ minHeight: 110, paddingVertical: materialTheme.spacing.md, textAlignVertical: 'top' }}
                 value={address}
               />
-            </View>
+            </Card>
 
-            <View style={styles.sectionCard}>
+            <Card style={styles.sectionCard}>
               <Text style={styles.sectionTitle}>Payment method</Text>
               <View style={styles.paymentRow}>
                 {paymentOptions.map((option) => {
@@ -399,9 +390,9 @@ export default function CartScreen() {
                   );
                 })}
               </View>
-            </View>
+            </Card>
 
-            <View style={styles.summaryCard}>
+            <Card style={styles.summaryCard}>
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Subtotal</Text>
                 <Text style={styles.summaryValue}>{formatCurrency(quoteSubtotal)}</Text>
@@ -423,10 +414,10 @@ export default function CartScreen() {
                 <Text style={styles.totalValue}>{formatCurrency(orderTotal)}</Text>
               </View>
               <Text style={styles.summaryFootnote}>
-                {quote ? `Server-verified � ${roleLabel} pricing${isFetching ? ' � refreshing' : ''}` : 'Refreshing server pricing�'}
-                {pricingError ? ` � ${pricingError.message}` : ''}
+                {quote ? `Server-verified • ${roleLabel} pricing${isFetching ? ' • refreshing' : ''}` : 'Refreshing server pricing…'}
+                {pricingError ? ` • ${pricingError.message}` : ''}
               </Text>
-            </View>
+            </Card>
           </>
         )}
       </ScrollView>
@@ -475,25 +466,41 @@ function formatCountLabel(value: number, label: string) {
   return `${value} ${label}${value === 1 ? '' : 's'}`;
 }
 
-const styles = StyleSheet.create({  reorderNoticeCard: {
-    ...materialTheme.shadow,
-    alignItems: 'center',
-    backgroundColor: materialTheme.colors.surface,
-    borderColor: materialTheme.colors.success,
-    borderRadius: materialTheme.radius.md,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
-    marginTop: 6,
-    padding: 14,
+const styles = StyleSheet.create({
+  safeArea: {
+    backgroundColor: materialTheme.colors.background,
+    flex: 1,
   },
-  reorderNoticeHeader: { flex: 1 },
-  reorderNoticeTitleRow: { alignItems: 'center', flexDirection: 'row', gap: 10 },
+  content: {
+    padding: materialTheme.screenPadding,
+    paddingBottom: materialTheme.spacing.xxxl,
+  },
+  contentWithStickyFooter: {
+    paddingBottom: 238,
+  },
+  header: {
+    marginBottom: materialTheme.spacing.lg,
+  },
+  title: {
+    ...materialTheme.typography.h1,
+    color: materialTheme.colors.text,
+  },
+  subtitle: {
+    ...materialTheme.typography.body,
+    color: materialTheme.colors.textMuted,
+    marginTop: materialTheme.spacing.xs,
+  },
+  reorderNoticeCard: {
+    borderColor: materialTheme.colors.success,
+    borderWidth: 1,
+    marginBottom: materialTheme.spacing.lg,
+  },
+  reorderNoticeHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  reorderNoticeTitleRow: { alignItems: 'center', flexDirection: 'row', gap: materialTheme.spacing.sm },
   reorderNoticeIcon: {
     alignItems: 'center',
     backgroundColor: materialTheme.colors.primarySoft,
-    borderRadius: 18,
+    borderRadius: materialTheme.radius.pill,
     height: 36,
     justifyContent: 'center',
     width: 36,
@@ -503,12 +510,12 @@ const styles = StyleSheet.create({  reorderNoticeCard: {
   reorderNoticeSummary: {
     ...materialTheme.typography.caption,
     color: materialTheme.colors.textMuted,
-    marginTop: 4,
+    marginTop: materialTheme.spacing.xs,
   },
   reorderNoticeCaption: {
     ...materialTheme.typography.caption,
     color: materialTheme.colors.textMuted,
-    marginTop: 4,
+    marginTop: materialTheme.spacing.sm,
   },
   reorderNoticeCloseButton: {
     alignItems: 'center',
@@ -523,16 +530,21 @@ const styles = StyleSheet.create({  reorderNoticeCard: {
     backgroundColor: materialTheme.colors.primarySoft,
     borderRadius: materialTheme.radius.md,
     flexDirection: 'row',
-    gap: 10,
-    marginBottom: 16,
-    padding: 12,
+    gap: materialTheme.spacing.sm,
+    marginBottom: materialTheme.spacing.lg,
+    padding: materialTheme.spacing.md,
   },
   progressText: { ...materialTheme.typography.caption, color: materialTheme.colors.text, flex: 1 },
-  cartCard: { ...materialTheme.shadow, backgroundColor: materialTheme.colors.surface, borderRadius: materialTheme.radius.md, marginBottom: 12, padding: 16 },
-  cartCardTop: { alignItems: 'center', flexDirection: 'row', gap: 14 },
+  cartCardWrapper: {
+    marginBottom: materialTheme.spacing.md,
+  },
+  cartCard: {
+    padding: materialTheme.spacing.lg,
+  },
+  cartCardTop: { alignItems: 'center', flexDirection: 'row', gap: materialTheme.spacing.md },
   cartInfo: { flex: 1 },
   cartName: { ...materialTheme.typography.h3, color: materialTheme.colors.text },
-  cartMeta: { ...materialTheme.typography.caption, color: materialTheme.colors.textMuted, marginTop: 6 },
+  cartMeta: { ...materialTheme.typography.caption, color: materialTheme.colors.textMuted, marginTop: materialTheme.spacing.xs },
   removeButton: {
     alignItems: 'center',
     backgroundColor: materialTheme.colors.surfaceMuted,
@@ -545,96 +557,40 @@ const styles = StyleSheet.create({  reorderNoticeCard: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 16,
+    marginTop: materialTheme.spacing.lg,
   },
   cartTotalChip: {
     backgroundColor: materialTheme.colors.surfaceMuted,
     borderRadius: materialTheme.radius.pill,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: materialTheme.spacing.md,
+    paddingVertical: materialTheme.spacing.sm,
   },
   cartTotalChipText: { ...materialTheme.typography.caption, color: materialTheme.colors.textMuted },
   lineTotal: { ...materialTheme.typography.h3, color: materialTheme.colors.primary },
   sectionCard: {
-    ...materialTheme.shadow,
-    backgroundColor: materialTheme.colors.surface,
-    borderRadius: materialTheme.radius.lg,
-    marginTop: 18,
-    padding: 18,
+    marginTop: materialTheme.spacing.lg,
   },
   sectionTitle: { ...materialTheme.typography.h3, color: materialTheme.colors.text },
-  locationButton: {
-    alignItems: 'center',
-    backgroundColor: materialTheme.colors.primary,
-    borderRadius: materialTheme.radius.md,
-    flexDirection: 'row',
-    gap: 8,
-    justifyContent: 'center',
-    marginTop: 14,
-    paddingVertical: 14,
-  },
-  locationButtonText: { ...materialTheme.typography.label, color: materialTheme.colors.white },
-  addressInput: {
-    ...materialTheme.typography.body,
-    backgroundColor: materialTheme.colors.white,
-    borderColor: materialTheme.colors.border,
-    borderRadius: materialTheme.radius.md,
-    borderWidth: 1,
-    color: materialTheme.colors.text,
-    marginTop: 14,
-    minHeight: 110,
-    padding: 14,
-  },
-  paymentRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 14 },
+  paymentRow: { flexDirection: 'row', flexWrap: 'wrap', gap: materialTheme.spacing.sm, marginTop: materialTheme.spacing.md },
   paymentChip: {
     backgroundColor: materialTheme.colors.surfaceMuted,
     borderRadius: materialTheme.radius.pill,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: materialTheme.spacing.lg,
+    paddingVertical: materialTheme.spacing.md,
   },
   paymentChipActive: { backgroundColor: materialTheme.colors.primary },
   paymentChipText: { ...materialTheme.typography.caption, color: materialTheme.colors.text },
   paymentChipTextActive: { color: materialTheme.colors.white },
   summaryCard: {
-    ...materialTheme.shadow,
-    backgroundColor: materialTheme.colors.surface,
-    borderRadius: materialTheme.radius.lg,
-    marginTop: 18,
-    padding: 18,
+    marginTop: materialTheme.spacing.lg,
   },
-  summaryRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
+  summaryRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: materialTheme.spacing.sm },
   summaryLabel: { ...materialTheme.typography.body, color: materialTheme.colors.textMuted },
   summaryValue: { ...materialTheme.typography.label, color: materialTheme.colors.text },
-  safeArea: {
-    backgroundColor: materialTheme.colors.background,
-    flex: 1,
-  },
-  content: {
-    padding: materialTheme.screenPadding,
-    paddingBottom: 32,
-  },
-  contentWithStickyFooter: {
-    paddingBottom: 238,
-  },
-  header: {
-    marginBottom: 18,
-  },
-  title: {
-    ...materialTheme.typography.h1,
-    color: materialTheme.colors.text,
-  },
-  subtitle: {
-    ...materialTheme.typography.body,
-    color: materialTheme.colors.textMuted,
-    marginTop: 6,
-  },
   emptyCard: {
-    ...materialTheme.shadow,
     alignItems: 'center',
-    backgroundColor: materialTheme.colors.surface,
-    borderRadius: materialTheme.radius.lg,
-    marginTop: 24,
-    padding: 28,
+    marginTop: materialTheme.spacing.xxl,
+    padding: materialTheme.spacing.xxl,
   },
   emptyIcon: {
     alignItems: 'center',
@@ -647,43 +603,19 @@ const styles = StyleSheet.create({  reorderNoticeCard: {
   emptyTitle: {
     ...materialTheme.typography.h2,
     color: materialTheme.colors.text,
-    marginTop: 18,
+    marginTop: materialTheme.spacing.lg,
   },
   emptyText: {
     ...materialTheme.typography.body,
     color: materialTheme.colors.textMuted,
-    marginTop: 8,
+    marginTop: materialTheme.spacing.sm,
     textAlign: 'center',
-  },
-  emptyButton: {
-    alignItems: 'center',
-    backgroundColor: materialTheme.colors.primary,
-    borderRadius: materialTheme.radius.md,
-    marginTop: 18,
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-  },
-  emptyButtonText: {
-    ...materialTheme.typography.label,
-    color: materialTheme.colors.white,
-  },
-  primaryButton: {
-    alignItems: 'center',
-    backgroundColor: materialTheme.colors.primary,
-    borderRadius: materialTheme.radius.md,
-    marginTop: 18,
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-  },
-  primaryButtonText: {
-    ...materialTheme.typography.label,
-    color: materialTheme.colors.white,
   },
   summaryRowTotal: {
     borderTopColor: materialTheme.colors.border,
     borderTopWidth: 1,
-    marginTop: 10,
-    paddingTop: 12,
+    marginTop: materialTheme.spacing.sm,
+    paddingTop: materialTheme.spacing.md,
   },
   totalLabel: {
     ...materialTheme.typography.h3,
@@ -696,6 +628,6 @@ const styles = StyleSheet.create({  reorderNoticeCard: {
   summaryFootnote: {
     ...materialTheme.typography.caption,
     color: materialTheme.colors.textMuted,
-    marginTop: 10,
+    marginTop: materialTheme.spacing.md,
   },
 });

@@ -31,7 +31,7 @@ export function SectionHeading({
     <View style={styles.sectionRow}>
       <Text style={styles.sectionTitle}>{title}</Text>
       {actionLabel && onPressAction ? (
-        <TouchableOpacity onPress={onPressAction}>
+        <TouchableOpacity activeOpacity={0.7} onPress={onPressAction}>
           <Text style={styles.sectionAction}>{actionLabel}</Text>
         </TouchableOpacity>
       ) : null}
@@ -52,7 +52,7 @@ export function ProductIconBadge({
           width: size,
           height: size,
           borderRadius: size / 2,
-          backgroundColor: `${accent}1A`,
+          backgroundColor: `${accent}20`,
         },
       ]}>
       <Ionicons
@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 14,
+    marginBottom: materialTheme.spacing.md,
   },
   sectionTitle: {
     ...materialTheme.typography.h3,
@@ -95,12 +95,12 @@ const styles = StyleSheet.create({
   },
   sectionAction: {
     ...materialTheme.typography.label,
-    color: materialTheme.colors.terracotta,
+    color: materialTheme.colors.primary,
   },
   iconBadge: {
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: materialTheme.colors.border,
+    borderColor: 'transparent',
+    borderWidth: 0, // removed border for cleaner look in dark mode
     justifyContent: 'center',
   },
   stepper: {
@@ -108,9 +108,9 @@ const styles = StyleSheet.create({
     backgroundColor: materialTheme.colors.primarySoft,
     borderRadius: materialTheme.radius.pill,
     flexDirection: 'row',
-    gap: 8,
-    paddingHorizontal: 4,
-    paddingVertical: 4,
+    gap: materialTheme.spacing.sm,
+    paddingHorizontal: materialTheme.spacing.xs,
+    paddingVertical: materialTheme.spacing.xs,
   },
   stepperButton: {
     alignItems: 'center',

@@ -4,10 +4,6 @@ import { formatCurrency, type Product } from '@/constants/material-data';
 
 const APP_SIGNATURE = 'Sent from the MaterialXpress app';
 
-export const MATERIAL_XPRESS_WHATSAPP_NUMBER = normalizePhoneNumber(
-  process.env.EXPO_PUBLIC_MATERIAL_XPRESS_WHATSAPP_NUMBER
-);
-
 type WhatsAppOrderItem = Pick<Product, 'name' | 'price' | 'unit'> & {
   quantity: number;
 };
@@ -23,11 +19,9 @@ type BuildWhatsAppOrderMessageOptions = {
 
 type OpenWhatsAppOrderOptions = {
   message: string;
-  phoneNumber?: string;
 };
 
 export type OpenWhatsAppOrderResult =
-  | 'missing-number'
   | 'opened-app'
   | 'opened-web'
   | 'unavailable';
@@ -85,17 +79,10 @@ export function buildWhatsAppOrderMessage({
 
 export async function openWhatsAppOrder({
   message,
-  phoneNumber = MATERIAL_XPRESS_WHATSAPP_NUMBER,
 }: OpenWhatsAppOrderOptions): Promise<OpenWhatsAppOrderResult> {
-  const normalizedPhoneNumber = normalizePhoneNumber(phoneNumber);
-
-  if (!normalizedPhoneNumber) {
-    return 'missing-number';
-  }
-
   const encodedMessage = encodeURIComponent(message);
-  const nativeUrl = `whatsapp://send?phone=${normalizedPhoneNumber}&text=${encodedMessage}`;
-  const webUrl = `https://wa.me/${normalizedPhoneNumber}?text=${encodedMessage}`;
+  const nativeUrl = `whatsapp://send?phone=919718622454&text=${encodedMessage}`;
+  const webUrl = `https://wa.me/919718622454?text=${encodedMessage}`;
 
   if (Platform.OS !== 'web') {
     try {
@@ -112,8 +99,4 @@ export async function openWhatsAppOrder({
   } catch {
     return 'unavailable';
   }
-}
-
-function normalizePhoneNumber(value?: string | null) {
-  return value?.replace(/[^\d]/g, '') ?? '';
 }

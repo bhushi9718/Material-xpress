@@ -1,0 +1,3495 @@
+﻿diff --git a/app/(tabs)/cart.tsx b/app/(tabs)/cart.tsx
+index ef31b8f..8a2028a 100644
+--- a/app/(tabs)/cart.tsx
++++ b/app/(tabs)/cart.tsx
+@@ -9,7 +9,6 @@ import {
+   ScrollView,
+   StyleSheet,
+   Text,
+-  TextInput,
+   TouchableOpacity,
+   View,
+ } from 'react-native';
+@@ -33,6 +32,9 @@ import {
+   buildWhatsAppOrderMessage,
+   openWhatsAppOrder,
+ } from '@/services/order/whatsapp-order';
++import { Card } from '@/components/ui/Card';
++import { Input } from '@/components/ui/Input';
++import { Button } from '@/components/ui/Button';
+ 
+ const FREE_DELIVERY_TARGET = 2000;
+ 
+@@ -231,7 +233,7 @@ export default function CartScreen() {
+         </View>
+ 
+         {cartItems.length === 0 ? (
+-          <View style={styles.emptyCard}>
++          <Card style={styles.emptyCard}>
+             <View style={styles.emptyIcon}>
+               <Ionicons
+                 color={materialTheme.colors.primary}
+@@ -243,16 +245,16 @@ export default function CartScreen() {
+             <Text style={styles.emptyText}>
+               Add hardware from search or featured picks to start a new order.
+             </Text>
+-            <TouchableOpacity
++            <Button
++              label="Browse products"
+               onPress={() => router.push('/search')}
+-              style={styles.primaryButton}>
+-              <Text style={styles.primaryButtonText}>Browse products</Text>
+-            </TouchableOpacity>
+-          </View>
++              style={{ marginTop: materialTheme.spacing.lg }}
++            />
++          </Card>
+         ) : (
+           <>
+             {showReorderNotice ? (
+-              <View style={styles.reorderNoticeCard}>
++              <Card style={styles.reorderNoticeCard}>
+                 <View style={styles.reorderNoticeHeader}>
+                   <View style={styles.reorderNoticeTitleRow}>
+                     <View style={styles.reorderNoticeIcon}>
+@@ -278,7 +280,7 @@ export default function CartScreen() {
+                   </TouchableOpacity>
+                 </View>
+                 <Text style={styles.reorderNoticeCaption}>{reorderNoticeCaption}</Text>
+-              </View>
++              </Card>
+             ) : null}
+ 
+             <View style={styles.progressCard}>
+@@ -304,77 +306,71 @@ export default function CartScreen() {
+                 exiting={FadeOutLeft.duration(160)}
+                 key={item.id}
+                 layout={LinearTransition.springify().damping(18).stiffness(220)}
+-                style={styles.cartCard}>
+-                <View style={styles.cartCardTop}>
+-                  <ProductIconBadge accent={item.accent} icon={item.icon} size={52} />
+-                  <View style={styles.cartInfo}>
+-                    <Text style={styles.cartName}>{item.name}</Text>
+-                    <Text style={styles.cartMeta}>
+-                      {formatCurrency(linePrice)} / {item.unit}
+-                    </Text>
++                style={styles.cartCardWrapper}>
++                <Card style={styles.cartCard}>
++                  <View style={styles.cartCardTop}>
++                    <ProductIconBadge accent={item.accent} icon={item.icon} size={52} />
++                    <View style={styles.cartInfo}>
++                      <Text style={styles.cartName}>{item.name}</Text>
++                      <Text style={styles.cartMeta}>
++                        {formatCurrency(linePrice)} / {item.unit}
++                      </Text>
++                    </View>
++                    <TouchableOpacity
++                      onPress={() => removeFromCart(item.id)}
++                      style={styles.removeButton}>
++                      <Ionicons
++                        color={materialTheme.colors.textMuted}
++                        name="trash-outline"
++                        size={18}
++                      />
++                    </TouchableOpacity>
+                   </View>
+-                  <TouchableOpacity
+-                    onPress={() => removeFromCart(item.id)}
+-                    style={styles.removeButton}>
+-                    <Ionicons
+-                      color={materialTheme.colors.textMuted}
+-                      name="trash-outline"
+-                      size={18}
+-                    />
+-                  </TouchableOpacity>
+-                </View>
+ 
+-                <View style={styles.cartTotalsRow}>
+-                  <View style={styles.cartTotalChip}>
+-                    <Text style={styles.cartTotalChipText}>
+-                      {item.quantity} x {formatCurrency(linePrice)}
++                  <View style={styles.cartTotalsRow}>
++                    <View style={styles.cartTotalChip}>
++                      <Text style={styles.cartTotalChipText}>
++                        {item.quantity} x {formatCurrency(linePrice)}
++                      </Text>
++                    </View>
++                    <Text style={styles.lineTotal}>
++                      {formatCurrency(lineTotal)}
+                     </Text>
+                   </View>
+-                  <Text style={styles.lineTotal}>
+-                    {formatCurrency(lineTotal)}
+-                  </Text>
+-                </View>
+ 
+-                <CartQuantityEditor
+-                  bulkOptions={[5, 10]}
+-                  onBulkAdd={(amount) => addToCart(item, amount)}
+-                  onCommitQuantity={(amount) => updateQuantity(item.id, amount)}
+-                  onDecrease={() => updateQuantity(item.id, item.quantity - 1)}
+-                  onIncrease={() => updateQuantity(item.id, item.quantity + 1)}
+-                  quantity={item.quantity}
+-                />
++                  <CartQuantityEditor
++                    bulkOptions={[5, 10]}
++                    onBulkAdd={(amount) => addToCart(item, amount)}
++                    onCommitQuantity={(amount) => updateQuantity(item.id, amount)}
++                    onDecrease={() => updateQuantity(item.id, item.quantity - 1)}
++                    onIncrease={() => updateQuantity(item.id, item.quantity + 1)}
++                    quantity={item.quantity}
++                  />
++                </Card>
+               </Animated.View>
+               );
+             })}
+ 
+-            <View style={styles.sectionCard}>
++            <Card style={styles.sectionCard}>
+               <Text style={styles.sectionTitle}>Delivery address</Text>
+-              <TouchableOpacity onPress={getCurrentLocation} style={styles.locationButton}>
+-                {loadingLocation ? (
+-                  <ActivityIndicator color={materialTheme.colors.white} />
+-                ) : (
+-                  <>
+-                    <Ionicons
+-                      color={materialTheme.colors.white}
+-                      name="locate-outline"
+-                      size={16}
+-                    />
+-                    <Text style={styles.locationButtonText}>Use current location</Text>
+-                  </>
+-                )}
+-              </TouchableOpacity>
+-              <TextInput
++              <Button
++                label="Use current location"
++                onPress={getCurrentLocation}
++                loading={loadingLocation}
++                icon={<Ionicons color={materialTheme.colors.white} name="locate-outline" size={16} />}
++                style={{ marginTop: materialTheme.spacing.md }}
++              />
++              <Input
+                 multiline
+                 onChangeText={setAddress}
+                 placeholder="Enter complete delivery address"
+-                placeholderTextColor={materialTheme.colors.textMuted}
+-                style={styles.addressInput}
+-                textAlignVertical="top"
++                containerStyle={{ marginTop: materialTheme.spacing.md }}
++                style={{ minHeight: 110, paddingVertical: materialTheme.spacing.md, textAlignVertical: 'top' }}
+                 value={address}
+               />
+-            </View>
++            </Card>
+ 
+-            <View style={styles.sectionCard}>
++            <Card style={styles.sectionCard}>
+               <Text style={styles.sectionTitle}>Payment method</Text>
+               <View style={styles.paymentRow}>
+                 {paymentOptions.map((option) => {
+@@ -399,9 +395,9 @@ export default function CartScreen() {
+                   );
+                 })}
+               </View>
+-            </View>
++            </Card>
+ 
+-            <View style={styles.summaryCard}>
++            <Card style={styles.summaryCard}>
+               <View style={styles.summaryRow}>
+                 <Text style={styles.summaryLabel}>Subtotal</Text>
+                 <Text style={styles.summaryValue}>{formatCurrency(quoteSubtotal)}</Text>
+@@ -423,10 +419,10 @@ export default function CartScreen() {
+                 <Text style={styles.totalValue}>{formatCurrency(orderTotal)}</Text>
+               </View>
+               <Text style={styles.summaryFootnote}>
+-                {quote ? `Server-verified ∩┐╜ ${roleLabel} pricing${isFetching ? ' ∩┐╜ refreshing' : ''}` : 'Refreshing server pricing∩┐╜'}
+-                {pricingError ? ` ∩┐╜ ${pricingError.message}` : ''}
++                {quote ? `Server-verified ΓÇó ${roleLabel} pricing${isFetching ? ' ΓÇó refreshing' : ''}` : 'Refreshing server pricingΓÇª'}
++                {pricingError ? ` ΓÇó ${pricingError.message}` : ''}
+               </Text>
+-            </View>
++            </Card>
+           </>
+         )}
+       </ScrollView>
+@@ -475,25 +471,41 @@ function formatCountLabel(value: number, label: string) {
+   return `${value} ${label}${value === 1 ? '' : 's'}`;
+ }
+ 
+-const styles = StyleSheet.create({  reorderNoticeCard: {
+-    ...materialTheme.shadow,
+-    alignItems: 'center',
+-    backgroundColor: materialTheme.colors.surface,
++const styles = StyleSheet.create({
++  safeArea: {
++    backgroundColor: materialTheme.colors.background,
++    flex: 1,
++  },
++  content: {
++    padding: materialTheme.screenPadding,
++    paddingBottom: materialTheme.spacing.xxxl,
++  },
++  contentWithStickyFooter: {
++    paddingBottom: 238,
++  },
++  header: {
++    marginBottom: materialTheme.spacing.lg,
++  },
++  title: {
++    ...materialTheme.typography.h1,
++    color: materialTheme.colors.text,
++  },
++  subtitle: {
++    ...materialTheme.typography.body,
++    color: materialTheme.colors.textMuted,
++    marginTop: materialTheme.spacing.xs,
++  },
++  reorderNoticeCard: {
+     borderColor: materialTheme.colors.success,
+-    borderRadius: materialTheme.radius.md,
+     borderWidth: 1,
+-    flexDirection: 'row',
+-    gap: 12,
+-    marginBottom: 16,
+-    marginTop: 6,
+-    padding: 14,
++    marginBottom: materialTheme.spacing.lg,
+   },
+-  reorderNoticeHeader: { flex: 1 },
+-  reorderNoticeTitleRow: { alignItems: 'center', flexDirection: 'row', gap: 10 },
++  reorderNoticeHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
++  reorderNoticeTitleRow: { alignItems: 'center', flexDirection: 'row', gap: materialTheme.spacing.sm },
+   reorderNoticeIcon: {
+     alignItems: 'center',
+     backgroundColor: materialTheme.colors.primarySoft,
+-    borderRadius: 18,
++    borderRadius: materialTheme.radius.pill,
+     height: 36,
+     justifyContent: 'center',
+     width: 36,
+@@ -503,12 +515,12 @@ const styles = StyleSheet.create({  reorderNoticeCard: {
+   reorderNoticeSummary: {
+     ...materialTheme.typography.caption,
+     color: materialTheme.colors.textMuted,
+-    marginTop: 4,
++    marginTop: materialTheme.spacing.xs,
+   },
+   reorderNoticeCaption: {
+     ...materialTheme.typography.caption,
+     color: materialTheme.colors.textMuted,
+-    marginTop: 4,
++    marginTop: materialTheme.spacing.sm,
+   },
+   reorderNoticeCloseButton: {
+     alignItems: 'center',
+@@ -523,16 +535,21 @@ const styles = StyleSheet.create({  reorderNoticeCard: {
+     backgroundColor: materialTheme.colors.primarySoft,
+     borderRadius: materialTheme.radius.md,
+     flexDirection: 'row',
+-    gap: 10,
+-    marginBottom: 16,
+-    padding: 12,
++    gap: materialTheme.spacing.sm,
++    marginBottom: materialTheme.spacing.lg,
++    padding: materialTheme.spacing.md,
+   },
+   progressText: { ...materialTheme.typography.caption, color: materialTheme.colors.text, flex: 1 },
+-  cartCard: { ...materialTheme.shadow, backgroundColor: materialTheme.colors.surface, borderRadius: materialTheme.radius.md, marginBottom: 12, padding: 16 },
+-  cartCardTop: { alignItems: 'center', flexDirection: 'row', gap: 14 },
++  cartCardWrapper: {
++    marginBottom: materialTheme.spacing.md,
++  },
++  cartCard: {
++    padding: materialTheme.spacing.lg,
++  },
++  cartCardTop: { alignItems: 'center', flexDirection: 'row', gap: materialTheme.spacing.md },
+   cartInfo: { flex: 1 },
+   cartName: { ...materialTheme.typography.h3, color: materialTheme.colors.text },
+-  cartMeta: { ...materialTheme.typography.caption, color: materialTheme.colors.textMuted, marginTop: 6 },
++  cartMeta: { ...materialTheme.typography.caption, color: materialTheme.colors.textMuted, marginTop: materialTheme.spacing.xs },
+   removeButton: {
+     alignItems: 'center',
+     backgroundColor: materialTheme.colors.surfaceMuted,
+@@ -545,96 +562,40 @@ const styles = StyleSheet.create({  reorderNoticeCard: {
+     alignItems: 'center',
+     flexDirection: 'row',
+     justifyContent: 'space-between',
+-    marginTop: 16,
++    marginTop: materialTheme.spacing.lg,
+   },
+   cartTotalChip: {
+     backgroundColor: materialTheme.colors.surfaceMuted,
+     borderRadius: materialTheme.radius.pill,
+-    paddingHorizontal: 12,
+-    paddingVertical: 8,
++    paddingHorizontal: materialTheme.spacing.md,
++    paddingVertical: materialTheme.spacing.sm,
+   },
+   cartTotalChipText: { ...materialTheme.typography.caption, color: materialTheme.colors.textMuted },
+   lineTotal: { ...materialTheme.typography.h3, color: materialTheme.colors.primary },
+   sectionCard: {
+-    ...materialTheme.shadow,
+-    backgroundColor: materialTheme.colors.surface,
+-    borderRadius: materialTheme.radius.lg,
+-    marginTop: 18,
+-    padding: 18,
++    marginTop: materialTheme.spacing.lg,
+   },
+   sectionTitle: { ...materialTheme.typography.h3, color: materialTheme.colors.text },
+-  locationButton: {
+-    alignItems: 'center',
+-    backgroundColor: materialTheme.colors.primary,
+-    borderRadius: materialTheme.radius.md,
+-    flexDirection: 'row',
+-    gap: 8,
+-    justifyContent: 'center',
+-    marginTop: 14,
+-    paddingVertical: 14,
+-  },
+-  locationButtonText: { ...materialTheme.typography.label, color: materialTheme.colors.white },
+-  addressInput: {
+-    ...materialTheme.typography.body,
+-    backgroundColor: materialTheme.colors.white,
+-    borderColor: materialTheme.colors.border,
+-    borderRadius: materialTheme.radius.md,
+-    borderWidth: 1,
+-    color: materialTheme.colors.text,
+-    marginTop: 14,
+-    minHeight: 110,
+-    padding: 14,
+-  },
+-  paymentRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 14 },
++  paymentRow: { flexDirection: 'row', flexWrap: 'wrap', gap: materialTheme.spacing.sm, marginTop: materialTheme.spacing.md },
+   paymentChip: {
+     backgroundColor: materialTheme.colors.surfaceMuted,
+     borderRadius: materialTheme.radius.pill,
+-    paddingHorizontal: 16,
+-    paddingVertical: 12,
++    paddingHorizontal: materialTheme.spacing.lg,
++    paddingVertical: materialTheme.spacing.md,
+   },
+   paymentChipActive: { backgroundColor: materialTheme.colors.primary },
+   paymentChipText: { ...materialTheme.typography.caption, color: materialTheme.colors.text },
+   paymentChipTextActive: { color: materialTheme.colors.white },
+   summaryCard: {
+-    ...materialTheme.shadow,
+-    backgroundColor: materialTheme.colors.surface,
+-    borderRadius: materialTheme.radius.lg,
+-    marginTop: 18,
+-    padding: 18,
++    marginTop: materialTheme.spacing.lg,
+   },
+-  summaryRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
++  summaryRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: materialTheme.spacing.sm },
+   summaryLabel: { ...materialTheme.typography.body, color: materialTheme.colors.textMuted },
+   summaryValue: { ...materialTheme.typography.label, color: materialTheme.colors.text },
+-  safeArea: {
+-    backgroundColor: materialTheme.colors.background,
+-    flex: 1,
+-  },
+-  content: {
+-    padding: materialTheme.screenPadding,
+-    paddingBottom: 32,
+-  },
+-  contentWithStickyFooter: {
+-    paddingBottom: 238,
+-  },
+-  header: {
+-    marginBottom: 18,
+-  },
+-  title: {
+-    ...materialTheme.typography.h1,
+-    color: materialTheme.colors.text,
+-  },
+-  subtitle: {
+-    ...materialTheme.typography.body,
+-    color: materialTheme.colors.textMuted,
+-    marginTop: 6,
+-  },
+   emptyCard: {
+-    ...materialTheme.shadow,
+     alignItems: 'center',
+-    backgroundColor: materialTheme.colors.surface,
+-    borderRadius: materialTheme.radius.lg,
+-    marginTop: 24,
+-    padding: 28,
++    marginTop: materialTheme.spacing.xxl,
++    padding: materialTheme.spacing.xxl,
+   },
+   emptyIcon: {
+     alignItems: 'center',
+@@ -647,43 +608,19 @@ const styles = StyleSheet.create({  reorderNoticeCard: {
+   emptyTitle: {
+     ...materialTheme.typography.h2,
+     color: materialTheme.colors.text,
+-    marginTop: 18,
++    marginTop: materialTheme.spacing.lg,
+   },
+   emptyText: {
+     ...materialTheme.typography.body,
+     color: materialTheme.colors.textMuted,
+-    marginTop: 8,
++    marginTop: materialTheme.spacing.sm,
+     textAlign: 'center',
+   },
+-  emptyButton: {
+-    alignItems: 'center',
+-    backgroundColor: materialTheme.colors.primary,
+-    borderRadius: materialTheme.radius.md,
+-    marginTop: 18,
+-    paddingHorizontal: 24,
+-    paddingVertical: 14,
+-  },
+-  emptyButtonText: {
+-    ...materialTheme.typography.label,
+-    color: materialTheme.colors.white,
+-  },
+-  primaryButton: {
+-    alignItems: 'center',
+-    backgroundColor: materialTheme.colors.primary,
+-    borderRadius: materialTheme.radius.md,
+-    marginTop: 18,
+-    paddingHorizontal: 24,
+-    paddingVertical: 14,
+-  },
+-  primaryButtonText: {
+-    ...materialTheme.typography.label,
+-    color: materialTheme.colors.white,
+-  },
+   summaryRowTotal: {
+     borderTopColor: materialTheme.colors.border,
+     borderTopWidth: 1,
+-    marginTop: 10,
+-    paddingTop: 12,
++    marginTop: materialTheme.spacing.sm,
++    paddingTop: materialTheme.spacing.md,
+   },
+   totalLabel: {
+     ...materialTheme.typography.h3,
+@@ -696,6 +633,6 @@ const styles = StyleSheet.create({  reorderNoticeCard: {
+   summaryFootnote: {
+     ...materialTheme.typography.caption,
+     color: materialTheme.colors.textMuted,
+-    marginTop: 10,
++    marginTop: materialTheme.spacing.md,
+   },
+ });
+diff --git a/app/(tabs)/index.tsx b/app/(tabs)/index.tsx
+index bf653ad..48561c0 100644
+--- a/app/(tabs)/index.tsx
++++ b/app/(tabs)/index.tsx
+@@ -29,6 +29,8 @@ import {
+ import { QuickOrderControls } from "@/components/quick-order";
+ import { useCart } from "@/contexts/cartcontext";
+ import { usePricing, useRoleBadge } from "@/contexts/pricing/pricing-context";
++import { Input } from "@/components/ui/Input";
++import { Card } from "@/components/ui/Card";
+ 
+ function formatPriceForDisplay(productId: string, fallbackUnitPrice: string, quote: ReturnType<typeof usePricing>["quote"]) {
+   const line = quote?.lines.find((entry) => entry.productId === productId);
+@@ -69,6 +71,7 @@ export default function HomeScreen() {
+         showsVerticalScrollIndicator={false}>
+         <View style={styles.headerRow}>
+           <TouchableOpacity
++            activeOpacity={0.7}
+             onPress={() => setLocationModalVisible(true)}
+             style={styles.locationChip}>
+             <Ionicons
+@@ -89,7 +92,7 @@ export default function HomeScreen() {
+             />
+           </TouchableOpacity>
+ 
+-          <TouchableOpacity style={styles.iconButton}>
++          <TouchableOpacity activeOpacity={0.7} style={styles.iconButton}>
+             <Ionicons
+               color={materialTheme.colors.primary}
+               name="notifications-outline"
+@@ -114,20 +117,19 @@ export default function HomeScreen() {
+         <Text style={styles.name}>Rajesh Kumar</Text>
+         <Text style={styles.subheading}>What are you building today?</Text>
+ 
+-        <TouchableOpacity
+-          onPress={() => router.push("/search")}
+-          style={styles.searchBar}>
+-          <Ionicons
+-            color={materialTheme.colors.textMuted}
+-            name="search-outline"
+-            size={18}
++        <TouchableOpacity activeOpacity={0.9} onPress={() => router.push("/search")}>
++          <Input
++            editable={false}
++            pointerEvents="none"
++            placeholder="Search hinges, locks, handles..."
++            containerStyle={styles.searchContainer}
++            leftIcon={<Ionicons color={materialTheme.colors.textMuted} name="search-outline" size={18} />}
++            rightIcon={
++              <View style={styles.searchVoice}>
++                <Ionicons color={materialTheme.colors.white} name="mic-outline" size={16} />
++              </View>
++            }
+           />
+-          <Text style={styles.searchPlaceholder}>
+-            Search hinges, locks, handles...
+-          </Text>
+-          <View style={styles.searchVoice}>
+-            <Ionicons color={materialTheme.colors.white} name="mic-outline" size={16} />
+-          </View>
+         </TouchableOpacity>
+ 
+         <ScrollView
+@@ -135,6 +137,7 @@ export default function HomeScreen() {
+           contentContainerStyle={styles.categoryRow}
+           showsHorizontalScrollIndicator={false}>
+           <TouchableOpacity
++            activeOpacity={0.7}
+             onPress={() => setActiveCategory("all")}
+             style={[
+               styles.categoryChip,
+@@ -154,12 +157,13 @@ export default function HomeScreen() {
+             return (
+               <TouchableOpacity
+                 key={category.id}
++                activeOpacity={0.7}
+                 onPress={() => setActiveCategory(category.id)}
+                 style={[
+                   styles.categoryChip,
+                   isActive && {
+-                    backgroundColor: `${category.accent}18`,
+-                    borderColor: category.accent,
++                    backgroundColor: `${category.accent}20`,
++                    borderColor: 'transparent',
+                   },
+                 ]}>
+                 <Ionicons
+@@ -194,38 +198,42 @@ export default function HomeScreen() {
+               <Animated.View
+                 key={product.id}
+                 layout={LinearTransition.springify().damping(18).stiffness(220)}
+-                style={styles.productCard}>
+-                <View style={styles.productHeader}>
+-                  <ProductIconBadge accent={product.accent} icon={product.icon} size={56} />
+-                  {product.tag ? <Text style={styles.productTag}>{product.tag}</Text> : null}
+-                </View>
++                style={styles.productCardWrapper}>
++                <Card style={styles.productCard}>
++                  <View style={styles.productHeader}>
++                    <ProductIconBadge accent={product.accent} icon={product.icon} size={56} />
++                    {product.tag ? <Text style={styles.productTag}>{product.tag}</Text> : null}
++                  </View>
+ 
+-                <Text style={styles.productCategory}>{product.category}</Text>
+-                <Text numberOfLines={2} style={styles.productName}>
+-                  {product.name}
+-                </Text>
+-                <Text numberOfLines={2} style={styles.productSubtitle}>
+-                  {product.subtitle}
+-                </Text>
+-                <Text style={styles.productPrice}>{primary}</Text>
+-                {secondary ? (
+-                  <Text style={styles.productPriceStrike}>{secondary}</Text>
+-                ) : null}
++                  <Text style={styles.productCategory}>{product.category}</Text>
++                  <Text numberOfLines={2} style={styles.productName}>
++                    {product.name}
++                  </Text>
++                  <Text numberOfLines={2} style={styles.productSubtitle}>
++                    {product.subtitle}
++                  </Text>
++                  <Text style={styles.productPrice}>{primary}</Text>
++                  {secondary ? (
++                    <Text style={styles.productPriceStrike}>{secondary}</Text>
++                  ) : null}
+ 
+-                <QuickOrderControls
+-                  bulkOptions={[5, 10]}
+-                  onAddOne={() => addToCart(product)}
+-                  onBulkAdd={(amount) => addToCart(product, amount)}
+-                  onDecrease={() => updateQuantity(product.id, quantity - 1)}
+-                  onIncrease={() => updateQuantity(product.id, quantity + 1)}
+-                  quantity={quantity}
+-                />
++                  <View style={styles.spacer} />
++
++                  <QuickOrderControls
++                    bulkOptions={[5, 10]}
++                    onAddOne={() => addToCart(product)}
++                    onBulkAdd={(amount) => addToCart(product, amount)}
++                    onDecrease={() => updateQuantity(product.id, quantity - 1)}
++                    onIncrease={() => updateQuantity(product.id, quantity + 1)}
++                    quantity={quantity}
++                  />
++                </Card>
+               </Animated.View>
+             );
+           })}
+         </View>
+ 
+-        <View style={styles.summaryCard}>
++        <Card style={styles.summaryCard}>
+           <Text style={styles.summaryTitle}>Project-ready bundles</Text>
+           <Text style={styles.summaryText}>
+             Curated hinge, lock, and handle sets for wardrobes, kitchens, and site handovers.
+@@ -235,7 +243,7 @@ export default function HomeScreen() {
+             <MetricCard label="Bulk savings" value="12%" />
+             <MetricCard label="Repeat orders" value="1 tap" />
+           </View>
+-        </View>
++        </Card>
+       </ScrollView>
+ 
+       <Modal
+@@ -247,7 +255,7 @@ export default function HomeScreen() {
+           <View style={styles.modalSheet}>
+             <View style={styles.modalHeader}>
+               <Text style={styles.modalTitle}>Choose delivery point</Text>
+-              <TouchableOpacity onPress={() => setLocationModalVisible(false)}>
++              <TouchableOpacity activeOpacity={0.7} onPress={() => setLocationModalVisible(false)}>
+                 <Ionicons
+                   color={materialTheme.colors.textMuted}
+                   name="close"
+@@ -259,6 +267,7 @@ export default function HomeScreen() {
+             {savedLocations.map((location) => (
+               <TouchableOpacity
+                 key={location.id}
++                activeOpacity={0.7}
+                 onPress={() => {
+                   setCurrentLocation(location);
+                   setLocationModalVisible(false);
+@@ -300,25 +309,23 @@ const styles = StyleSheet.create({
+   },
+   content: {
+     padding: materialTheme.screenPadding,
+-    paddingBottom: 36,
++    paddingBottom: materialTheme.spacing.xxxxl,
+   },
+   headerRow: {
+     alignItems: "center",
+     flexDirection: "row",
+-    gap: 12,
++    gap: materialTheme.spacing.md,
+     justifyContent: "space-between",
+   },
+   locationChip: {
+     alignItems: "center",
+     backgroundColor: materialTheme.colors.surface,
+-    borderColor: materialTheme.colors.border,
+     borderRadius: materialTheme.radius.pill,
+-    borderWidth: 1,
+     flex: 1,
+     flexDirection: "row",
+-    gap: 10,
+-    paddingHorizontal: 14,
+-    paddingVertical: 12,
++    gap: materialTheme.spacing.sm,
++    paddingHorizontal: materialTheme.spacing.md,
++    paddingVertical: materialTheme.spacing.md,
+   },
+   locationTextWrap: { flex: 1 },
+   locationLabel: {
+@@ -341,7 +348,7 @@ const styles = StyleSheet.create({
+   greeting: {
+     ...materialTheme.typography.h3,
+     color: materialTheme.colors.textMuted,
+-    marginTop: 18,
++    marginTop: materialTheme.spacing.lg,
+   },
+   name: {
+     ...materialTheme.typography.display,
+@@ -350,24 +357,10 @@ const styles = StyleSheet.create({
+   subheading: {
+     ...materialTheme.typography.body,
+     color: materialTheme.colors.textMuted,
+-    marginTop: 6,
++    marginTop: materialTheme.spacing.xs,
+   },
+-  searchBar: {
+-    alignItems: "center",
+-    backgroundColor: materialTheme.colors.surface,
+-    borderColor: materialTheme.colors.border,
+-    borderRadius: materialTheme.radius.pill,
+-    borderWidth: 1,
+-    flexDirection: "row",
+-    gap: 10,
+-    marginTop: 18,
+-    paddingHorizontal: 16,
+-    paddingVertical: 12,
+-  },
+-  searchPlaceholder: {
+-    ...materialTheme.typography.body,
+-    color: materialTheme.colors.textMuted,
+-    flex: 1,
++  searchContainer: {
++    marginTop: materialTheme.spacing.lg,
+   },
+   searchVoice: {
+     alignItems: "center",
+@@ -379,23 +372,20 @@ const styles = StyleSheet.create({
+   },
+   categoryRow: {
+     flexDirection: "row",
+-    gap: 10,
+-    paddingVertical: 14,
++    gap: materialTheme.spacing.sm,
++    paddingVertical: materialTheme.spacing.lg,
+   },
+   categoryChip: {
+     alignItems: "center",
+     backgroundColor: materialTheme.colors.surface,
+-    borderColor: materialTheme.colors.border,
+     borderRadius: materialTheme.radius.pill,
+-    borderWidth: 1,
+     flexDirection: "row",
+-    gap: 8,
+-    paddingHorizontal: 14,
+-    paddingVertical: 10,
++    gap: materialTheme.spacing.sm,
++    paddingHorizontal: materialTheme.spacing.lg,
++    paddingVertical: materialTheme.spacing.md,
+   },
+   categoryChipActive: {
+     backgroundColor: materialTheme.colors.primary,
+-    borderColor: materialTheme.colors.primary,
+   },
+   categoryChipText: {
+     ...materialTheme.typography.caption,
+@@ -408,24 +398,24 @@ const styles = StyleSheet.create({
+     flexDirection: "row",
+     flexWrap: "wrap",
+     justifyContent: "space-between",
+-    rowGap: 14,
++    rowGap: materialTheme.spacing.md,
+   },
+-  productCard: {
+-    ...materialTheme.shadow,
+-    backgroundColor: materialTheme.colors.surface,
+-    borderRadius: materialTheme.radius.md,
+-    marginBottom: 2,
+-    padding: 16,
++  productCardWrapper: {
+     width: "48.3%",
++    marginBottom: materialTheme.spacing.sm,
++  },
++  productCard: {
++    flex: 1, // ensure card expands fully
++    padding: materialTheme.spacing.lg,
+   },
+   productHeader: {
+     alignItems: "flex-start",
+-    marginBottom: 14,
++    marginBottom: materialTheme.spacing.md,
+   },
+   productTag: {
+     ...materialTheme.typography.caption,
+     color: materialTheme.colors.terracotta,
+-    marginTop: 10,
++    marginTop: materialTheme.spacing.sm,
+   },
+   productCategory: {
+     ...materialTheme.typography.caption,
+@@ -434,26 +424,32 @@ const styles = StyleSheet.create({
+   productName: {
+     ...materialTheme.typography.h3,
+     color: materialTheme.colors.text,
+-    marginTop: 6,
++    marginTop: materialTheme.spacing.xs,
+   },
+   productSubtitle: {
+     ...materialTheme.typography.caption,
+     color: materialTheme.colors.textMuted,
+-    marginTop: 8,
++    marginTop: materialTheme.spacing.sm,
+     minHeight: 32,
+   },
+   productPrice: {
+     ...materialTheme.typography.label,
+     color: materialTheme.colors.primary,
+-    marginBottom: 14,
+-    marginTop: 12,
++    marginBottom: materialTheme.spacing.md,
++    marginTop: materialTheme.spacing.md,
++  },
++  productPriceStrike: {
++    ...materialTheme.typography.caption,
++    color: materialTheme.colors.textMuted,
++    marginTop: -materialTheme.spacing.sm,
++    marginBottom: materialTheme.spacing.sm,
++    textDecorationLine: "line-through",
++  },
++  spacer: {
++    flex: 1,
+   },
+   summaryCard: {
+-    ...materialTheme.shadow,
+-    backgroundColor: materialTheme.colors.surface,
+-    borderRadius: materialTheme.radius.lg,
+-    marginTop: 24,
+-    padding: 20,
++    marginTop: materialTheme.spacing.xxl,
+   },
+   summaryTitle: {
+     ...materialTheme.typography.h2,
+@@ -462,18 +458,18 @@ const styles = StyleSheet.create({
+   summaryText: {
+     ...materialTheme.typography.body,
+     color: materialTheme.colors.textMuted,
+-    marginTop: 8,
++    marginTop: materialTheme.spacing.sm,
+   },
+   summaryMetrics: {
+     flexDirection: "row",
+-    gap: 10,
+-    marginTop: 18,
++    gap: materialTheme.spacing.sm,
++    marginTop: materialTheme.spacing.lg,
+   },
+   metricCard: {
+     backgroundColor: materialTheme.colors.surfaceMuted,
+     borderRadius: materialTheme.radius.md,
+     flex: 1,
+-    padding: 14,
++    padding: materialTheme.spacing.md,
+   },
+   metricValue: {
+     ...materialTheme.typography.h3,
+@@ -482,24 +478,24 @@ const styles = StyleSheet.create({
+   metricLabel: {
+     ...materialTheme.typography.caption,
+     color: materialTheme.colors.textMuted,
+-    marginTop: 6,
++    marginTop: materialTheme.spacing.xs,
+   },
+   modalOverlay: {
+-    backgroundColor: "rgba(24, 33, 27, 0.28)",
++    backgroundColor: "rgba(15, 23, 42, 0.75)",
+     flex: 1,
+     justifyContent: "flex-end",
+   },
+   modalSheet: {
+     backgroundColor: materialTheme.colors.surface,
+-    borderTopLeftRadius: 28,
+-    borderTopRightRadius: 28,
+-    padding: 22,
++    borderTopLeftRadius: materialTheme.radius.lg,
++    borderTopRightRadius: materialTheme.radius.lg,
++    padding: materialTheme.spacing.xxl,
+   },
+   modalHeader: {
+     alignItems: "center",
+     flexDirection: "row",
+     justifyContent: "space-between",
+-    marginBottom: 18,
++    marginBottom: materialTheme.spacing.lg,
+   },
+   modalTitle: {
+     ...materialTheme.typography.h2,
+@@ -511,7 +507,7 @@ const styles = StyleSheet.create({
+     borderBottomWidth: 1,
+     flexDirection: "row",
+     justifyContent: "space-between",
+-    paddingVertical: 16,
++    paddingVertical: materialTheme.spacing.lg,
+   },
+   locationOptionLabel: {
+     ...materialTheme.typography.h3,
+@@ -520,7 +516,7 @@ const styles = StyleSheet.create({
+   locationOptionValue: {
+     ...materialTheme.typography.body,
+     color: materialTheme.colors.textMuted,
+-    marginTop: 4,
++    marginTop: materialTheme.spacing.xs,
+     maxWidth: 260,
+   },
+   roleBanner: {
+@@ -529,19 +525,13 @@ const styles = StyleSheet.create({
+     backgroundColor: materialTheme.colors.primarySoft,
+     borderRadius: materialTheme.radius.pill,
+     flexDirection: "row",
+-    gap: 8,
+-    marginTop: 14,
+-    paddingHorizontal: 12,
+-    paddingVertical: 8,
++    gap: materialTheme.spacing.sm,
++    marginTop: materialTheme.spacing.md,
++    paddingHorizontal: materialTheme.spacing.md,
++    paddingVertical: materialTheme.spacing.sm,
+   },
+   roleBannerText: {
+     ...materialTheme.typography.caption,
+     color: materialTheme.colors.primary,
+   },
+-  productPriceStrike: {
+-    ...materialTheme.typography.caption,
+-    color: materialTheme.colors.textMuted,
+-    marginTop: -8,
+-    textDecorationLine: "line-through",
+-  },
+ });
+diff --git a/app/(tabs)/orders.tsx b/app/(tabs)/orders.tsx
+index 1fd914d..5b8d104 100644
+--- a/app/(tabs)/orders.tsx
++++ b/app/(tabs)/orders.tsx
+@@ -11,13 +11,13 @@ import {
+ import {
+   LiveOrderTrackingCard,
+   OrderHistoryCard,
+-  orderTrackingPalette,
+ } from '@/components/order-tracking';
+ import { materialTheme } from '@/constants/material-theme';
+ import { useOrderReorder } from '@/hooks/use-order-reorder';
+ import { useLiveOrderTracking } from '@/hooks/use-live-order-tracking';
+ import { getOrderReorderSummary } from '@/services/orders/reorder-service';
+ import { isOrderActive } from '@/services/orders/order-tracking-service';
++import { Card } from '@/components/ui/Card';
+ 
+ export default function OrdersScreen() {
+   const {
+@@ -50,7 +50,7 @@ export default function OrdersScreen() {
+           </View>
+           <View style={styles.cityChip}>
+             <Ionicons
+-              color={orderTrackingPalette.liveGlow}
++              color={materialTheme.colors.success}
+               name="location-outline"
+               size={14}
+             />
+@@ -62,7 +62,7 @@ export default function OrdersScreen() {
+           Follow each dispatch milestone, rider handoff, and delivery ETA from the existing orders flow.
+         </Text>
+ 
+-        <View style={styles.snapshotCard}>
++        <Card style={styles.snapshotCard}>
+           <View style={styles.snapshotMetric}>
+             <Text style={styles.snapshotValue}>{String(orders.length).padStart(2, '0')}</Text>
+             <Text style={styles.snapshotLabel}>Recent jobs</Text>
+@@ -75,26 +75,26 @@ export default function OrdersScreen() {
+             <Text style={styles.snapshotValue}>{String(completedOrdersCount).padStart(2, '0')}</Text>
+             <Text style={styles.snapshotLabel}>Delivered</Text>
+           </View>
+-        </View>
++        </Card>
+ 
+         {errorMessage ? (
+-          <View style={styles.noticeCard}>
++          <Card style={styles.noticeCard}>
+             <Ionicons
+-              color={orderTrackingPalette.warning}
++              color={materialTheme.colors.terracotta}
+               name="warning-outline"
+               size={18}
+             />
+             <Text style={styles.noticeText}>
+               Firebase sync is unavailable right now, so the screen is showing the local live preview stream.
+             </Text>
+-          </View>
++          </Card>
+         ) : null}
+ 
+         {isLoading ? (
+-          <View style={styles.loadingCard}>
+-            <ActivityIndicator color={orderTrackingPalette.liveGlow} />
++          <Card style={styles.loadingCard}>
++            <ActivityIndicator color={materialTheme.colors.primary} />
+             <Text style={styles.loadingText}>Syncing order tracking feed...</Text>
+-          </View>
++          </Card>
+         ) : null}
+ 
+         {activeOrder ? (
+@@ -105,9 +105,9 @@ export default function OrdersScreen() {
+             source={source}
+           />
+         ) : (
+-          <View style={styles.idleCard}>
++          <Card style={styles.idleCard}>
+             <Ionicons
+-              color={orderTrackingPalette.liveGlow}
++              color={materialTheme.colors.success}
+               name="checkmark-done-outline"
+               size={22}
+             />
+@@ -115,7 +115,7 @@ export default function OrdersScreen() {
+             <Text style={styles.idleText}>
+               Your recent orders are complete. Reorder any bundle below to trigger a new tracked dispatch.
+             </Text>
+-          </View>
++          </Card>
+         )}
+ 
+         <View style={styles.sectionHeader}>
+@@ -139,12 +139,12 @@ export default function OrdersScreen() {
+         ))}
+ 
+         {!activeOrder && historicalOrders.length === 0 && !isLoading ? (
+-          <View style={styles.emptyCard}>
++          <Card style={styles.emptyCard}>
+             <Text style={styles.emptyTitle}>No orders yet</Text>
+             <Text style={styles.emptyText}>
+               New city rollouts can plug into the same tracking architecture once orders start syncing here.
+             </Text>
+-          </View>
++          </Card>
+         ) : null}
+       </ScrollView>
+     </SafeAreaView>
+@@ -153,50 +153,46 @@ export default function OrdersScreen() {
+ 
+ const styles = StyleSheet.create({
+   safeArea: {
+-    backgroundColor: orderTrackingPalette.background,
++    backgroundColor: materialTheme.colors.background,
+     flex: 1,
+   },
+   content: {
+     padding: materialTheme.screenPadding,
+-    paddingBottom: 32,
++    paddingBottom: materialTheme.spacing.xxxl,
+   },
+   cityChip: {
+     alignItems: 'center',
+-    backgroundColor: '#101A17',
+-    borderColor: orderTrackingPalette.border,
++    backgroundColor: materialTheme.colors.surfaceMuted,
++    borderColor: materialTheme.colors.border,
+     borderRadius: materialTheme.radius.pill,
+     borderWidth: 1,
+     flexDirection: 'row',
+     gap: 6,
+-    paddingHorizontal: 12,
+-    paddingVertical: 9,
++    paddingHorizontal: materialTheme.spacing.md,
++    paddingVertical: materialTheme.spacing.sm,
+   },
+   cityChipText: {
+     ...materialTheme.typography.caption,
+-    color: orderTrackingPalette.text,
++    color: materialTheme.colors.text,
+   },
+   emptyCard: {
+     alignItems: 'center',
+-    backgroundColor: '#0D1714',
+-    borderColor: orderTrackingPalette.border,
+-    borderRadius: materialTheme.radius.lg,
+-    borderWidth: 1,
+-    marginTop: 18,
+-    padding: 24,
++    marginTop: materialTheme.spacing.lg,
++    padding: materialTheme.spacing.xxl,
+   },
+   emptyText: {
+     ...materialTheme.typography.body,
+-    color: orderTrackingPalette.muted,
+-    marginTop: 8,
++    color: materialTheme.colors.textMuted,
++    marginTop: materialTheme.spacing.sm,
+     textAlign: 'center',
+   },
+   emptyTitle: {
+     ...materialTheme.typography.h3,
+-    color: orderTrackingPalette.text,
++    color: materialTheme.colors.text,
+   },
+   eyebrow: {
+     ...materialTheme.typography.caption,
+-    color: orderTrackingPalette.liveGlow,
++    color: materialTheme.colors.success,
+     textTransform: 'uppercase',
+   },
+   header: {
+@@ -206,98 +202,84 @@ const styles = StyleSheet.create({
+   },
+   idleCard: {
+     alignItems: 'center',
+-    backgroundColor: '#0D1714',
+-    borderColor: orderTrackingPalette.border,
+-    borderRadius: materialTheme.radius.lg,
+-    borderWidth: 1,
+-    marginTop: 22,
+-    padding: 24,
++    marginTop: materialTheme.spacing.xl,
++    padding: materialTheme.spacing.xxl,
+   },
+   idleText: {
+     ...materialTheme.typography.body,
+-    color: orderTrackingPalette.muted,
+-    marginTop: 8,
++    color: materialTheme.colors.textMuted,
++    marginTop: materialTheme.spacing.sm,
+     textAlign: 'center',
+   },
+   idleTitle: {
+     ...materialTheme.typography.h3,
+-    color: orderTrackingPalette.text,
+-    marginTop: 12,
++    color: materialTheme.colors.text,
++    marginTop: materialTheme.spacing.md,
+   },
+   loadingCard: {
+     alignItems: 'center',
+-    backgroundColor: '#0D1714',
+-    borderColor: orderTrackingPalette.border,
+-    borderRadius: materialTheme.radius.lg,
+-    borderWidth: 1,
+     flexDirection: 'row',
+-    gap: 12,
+-    marginTop: 18,
+-    padding: 18,
++    gap: materialTheme.spacing.md,
++    marginTop: materialTheme.spacing.lg,
++    padding: materialTheme.spacing.lg,
+   },
+   loadingText: {
+     ...materialTheme.typography.body,
+-    color: orderTrackingPalette.text,
++    color: materialTheme.colors.text,
+     flex: 1,
+   },
+   noticeCard: {
+     alignItems: 'center',
+-    backgroundColor: '#171207',
+-    borderColor: '#3D2F14',
+-    borderRadius: materialTheme.radius.md,
++    borderColor: materialTheme.colors.terracotta,
+     borderWidth: 1,
+     flexDirection: 'row',
+-    gap: 10,
+-    marginTop: 18,
+-    padding: 14,
++    gap: materialTheme.spacing.sm,
++    marginTop: materialTheme.spacing.lg,
++    padding: materialTheme.spacing.md,
+   },
+   noticeText: {
+     ...materialTheme.typography.caption,
+-    color: '#F1D38B',
++    color: materialTheme.colors.terracotta,
+     flex: 1,
+   },
+   sectionCaption: {
+     ...materialTheme.typography.caption,
+-    color: orderTrackingPalette.muted,
+-    marginTop: 4,
++    color: materialTheme.colors.textMuted,
++    marginTop: materialTheme.spacing.xs,
+   },
+   sectionHeader: {
+-    marginTop: 24,
++    marginTop: materialTheme.spacing.xxl,
+   },
+   sectionTitle: {
+     ...materialTheme.typography.h3,
+-    color: orderTrackingPalette.text,
++    color: materialTheme.colors.text,
+   },
+   title: {
+     ...materialTheme.typography.h1,
+-    color: orderTrackingPalette.text,
+-    marginTop: 4,
++    color: materialTheme.colors.text,
++    marginTop: materialTheme.spacing.xs,
+   },
+   subtitle: {
+     ...materialTheme.typography.body,
+-    color: orderTrackingPalette.muted,
+-    marginTop: 10,
++    color: materialTheme.colors.textMuted,
++    marginTop: materialTheme.spacing.md,
+   },
+   snapshotCard: {
+-    backgroundColor: '#0D1714',
+-    borderColor: orderTrackingPalette.border,
+-    borderRadius: materialTheme.radius.lg,
+-    borderWidth: 1,
+     flexDirection: 'row',
+     justifyContent: 'space-between',
+-    marginTop: 20,
+-    padding: 18,
++    marginTop: materialTheme.spacing.xl,
++    padding: materialTheme.spacing.lg,
+   },
+   snapshotMetric: {
+     flex: 1,
+   },
+   snapshotValue: {
+     ...materialTheme.typography.h2,
+-    color: orderTrackingPalette.text,
++    color: materialTheme.colors.text,
+   },
+   snapshotLabel: {
+     ...materialTheme.typography.caption,
+-    color: orderTrackingPalette.muted,
+-    marginTop: 6,
++    color: materialTheme.colors.textMuted,
++    marginTop: materialTheme.spacing.sm,
+   },
+ });
+diff --git a/app/(tabs)/profile.tsx b/app/(tabs)/profile.tsx
+index 640b5da..04fd9e6 100644
+--- a/app/(tabs)/profile.tsx
++++ b/app/(tabs)/profile.tsx
+@@ -11,13 +11,15 @@ import {
+   ScrollView,
+   StyleSheet,
+   Text,
+-  TextInput,
+   TouchableOpacity,
+   View,
+ } from 'react-native';
+ 
+ import { profileQuickLinks } from '@/constants/material-data';
+ import { materialTheme } from '@/constants/material-theme';
++import { Card } from '@/components/ui/Card';
++import { Input } from '@/components/ui/Input';
++import { Button } from '@/components/ui/Button';
+ 
+ const STORAGE_KEY = '@material_xpress_profile';
+ 
+@@ -93,7 +95,7 @@ export default function ProfileScreen() {
+   return (
+     <SafeAreaView style={styles.safeArea}>
+       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+-        <View style={styles.profileCard}>
++        <Card style={styles.profileCard}>
+           <TouchableOpacity onPress={pickImage} style={styles.avatarWrap}>
+             {imageUri ? (
+               <Image source={{ uri: imageUri }} style={styles.avatarImage} />
+@@ -115,40 +117,38 @@ export default function ProfileScreen() {
+             <StatChip label="Saved" value="12" />
+             <StatChip label="Wishlist" value="08" />
+           </View>
+-        </View>
++        </Card>
+ 
+-        <View style={styles.formCard}>
++        <Card style={styles.formCard}>
+           <Text style={styles.sectionTitle}>Account details</Text>
+           <Text style={styles.sectionText}>
+             Keep contact details updated for invoices and site delivery coordination.
+           </Text>
+ 
+           <Text style={styles.fieldLabel}>Full Name</Text>
+-          <TextInput
++          <Input
+             onChangeText={setName}
+             placeholder="Your name"
+-            placeholderTextColor={materialTheme.colors.textMuted}
+-            style={styles.textInput}
+             value={name}
+           />
+ 
+           <Text style={styles.fieldLabel}>Email Address</Text>
+-          <TextInput
++          <Input
+             autoCapitalize="none"
+             keyboardType="email-address"
+             onChangeText={setEmail}
+             placeholder="name@example.com"
+-            placeholderTextColor={materialTheme.colors.textMuted}
+-            style={styles.textInput}
+             value={email}
+           />
+ 
+-          <TouchableOpacity onPress={saveProfile} style={styles.primaryButton}>
+-            <Text style={styles.primaryButtonText}>Save profile</Text>
+-          </TouchableOpacity>
+-        </View>
++          <Button
++            label="Save profile"
++            onPress={saveProfile}
++            style={{ marginTop: materialTheme.spacing.xl }}
++          />
++        </Card>
+ 
+-        <View style={styles.menuCard}>
++        <Card style={styles.menuCard}>
+           <TouchableOpacity
+             onPress={() => router.push('/vendor')}
+             style={styles.vendorPortalCard}>
+@@ -187,12 +187,16 @@ export default function ProfileScreen() {
+               />
+             </TouchableOpacity>
+           ))}
+-        </View>
++        </Card>
+ 
+-        <TouchableOpacity onPress={logout} style={styles.logoutButton}>
+-          <Ionicons color={materialTheme.colors.danger} name="log-out-outline" size={18} />
+-          <Text style={styles.logoutText}>Logout</Text>
+-        </TouchableOpacity>
++        <Button
++          label="Logout"
++          onPress={logout}
++          icon={<Ionicons color={materialTheme.colors.danger} name="log-out-outline" size={18} />}
++          variant="outline"
++          style={styles.logoutButton}
++          labelStyle={{ color: materialTheme.colors.danger }}
++        />
+       </ScrollView>
+     </SafeAreaView>
+   );
+@@ -214,17 +218,14 @@ const styles = StyleSheet.create({
+   },
+   content: {
+     padding: materialTheme.screenPadding,
+-    paddingBottom: 32,
++    paddingBottom: materialTheme.spacing.xxxl,
+   },
+   profileCard: {
+-    ...materialTheme.shadow,
+     alignItems: 'center',
+-    backgroundColor: materialTheme.colors.surface,
+-    borderRadius: materialTheme.radius.lg,
+-    padding: 24,
++    padding: materialTheme.spacing.xxl,
+   },
+   avatarWrap: {
+-    marginBottom: 14,
++    marginBottom: materialTheme.spacing.md,
+     position: 'relative',
+   },
+   avatarImage: {
+@@ -262,19 +263,19 @@ const styles = StyleSheet.create({
+   email: {
+     ...materialTheme.typography.body,
+     color: materialTheme.colors.textMuted,
+-    marginTop: 6,
++    marginTop: materialTheme.spacing.xs,
+   },
+   statsRow: {
+     flexDirection: 'row',
+-    gap: 10,
+-    marginTop: 20,
++    gap: materialTheme.spacing.sm,
++    marginTop: materialTheme.spacing.xl,
+   },
+   statChip: {
+     backgroundColor: materialTheme.colors.surfaceMuted,
+     borderRadius: materialTheme.radius.md,
+     flex: 1,
+-    paddingHorizontal: 16,
+-    paddingVertical: 14,
++    paddingHorizontal: materialTheme.spacing.lg,
++    paddingVertical: materialTheme.spacing.md,
+   },
+   statValue: {
+     ...materialTheme.typography.h3,
+@@ -284,31 +285,25 @@ const styles = StyleSheet.create({
+   statLabel: {
+     ...materialTheme.typography.caption,
+     color: materialTheme.colors.textMuted,
+-    marginTop: 6,
++    marginTop: materialTheme.spacing.xs,
+     textAlign: 'center',
+   },
+   formCard: {
+-    ...materialTheme.shadow,
+-    backgroundColor: materialTheme.colors.surface,
+-    borderRadius: materialTheme.radius.lg,
+-    marginTop: 18,
+-    padding: 20,
++    marginTop: materialTheme.spacing.lg,
++    padding: materialTheme.spacing.lg,
+   },
+   menuCard: {
+-    ...materialTheme.shadow,
+-    backgroundColor: materialTheme.colors.surface,
+-    borderRadius: materialTheme.radius.lg,
+-    marginTop: 18,
+-    padding: 20,
++    marginTop: materialTheme.spacing.lg,
++    padding: materialTheme.spacing.lg,
+   },
+   vendorPortalCard: {
+     alignItems: 'center',
+     backgroundColor: materialTheme.colors.primary,
+     borderRadius: materialTheme.radius.lg,
+     flexDirection: 'row',
+-    gap: 14,
+-    marginBottom: 18,
+-    padding: 18,
++    gap: materialTheme.spacing.md,
++    marginBottom: materialTheme.spacing.lg,
++    padding: materialTheme.spacing.lg,
+   },
+   vendorPortalIcon: {
+     alignItems: 'center',
+@@ -337,34 +332,13 @@ const styles = StyleSheet.create({
+   sectionText: {
+     ...materialTheme.typography.body,
+     color: materialTheme.colors.textMuted,
+-    marginTop: 6,
++    marginTop: materialTheme.spacing.xs,
+   },
+   fieldLabel: {
+     ...materialTheme.typography.label,
+     color: materialTheme.colors.text,
+-    marginBottom: 8,
+-    marginTop: 18,
+-  },
+-  textInput: {
+-    ...materialTheme.typography.body,
+-    backgroundColor: materialTheme.colors.white,
+-    borderColor: materialTheme.colors.border,
+-    borderRadius: materialTheme.radius.md,
+-    borderWidth: 1,
+-    color: materialTheme.colors.text,
+-    paddingHorizontal: 16,
+-    paddingVertical: 15,
+-  },
+-  primaryButton: {
+-    alignItems: 'center',
+-    backgroundColor: materialTheme.colors.primary,
+-    borderRadius: materialTheme.radius.md,
+-    marginTop: 22,
+-    paddingVertical: 15,
+-  },
+-  primaryButtonText: {
+-    ...materialTheme.typography.label,
+-    color: materialTheme.colors.white,
++    marginBottom: materialTheme.spacing.sm,
++    marginTop: materialTheme.spacing.lg,
+   },
+   menuItem: {
+     alignItems: 'center',
+@@ -372,13 +346,13 @@ const styles = StyleSheet.create({
+     borderBottomWidth: 1,
+     flexDirection: 'row',
+     justifyContent: 'space-between',
+-    paddingVertical: 16,
++    paddingVertical: materialTheme.spacing.lg,
+   },
+   menuItemLeft: {
+     alignItems: 'center',
+     flexDirection: 'row',
+     flex: 1,
+-    gap: 12,
++    gap: materialTheme.spacing.md,
+   },
+   menuIcon: {
+     alignItems: 'center',
+@@ -401,17 +375,7 @@ const styles = StyleSheet.create({
+     marginTop: 4,
+   },
+   logoutButton: {
+-    alignItems: 'center',
+-    backgroundColor: materialTheme.colors.surface,
+-    borderRadius: materialTheme.radius.md,
+-    flexDirection: 'row',
+-    gap: 8,
+-    justifyContent: 'center',
+-    marginTop: 18,
+-    paddingVertical: 16,
+-  },
+-  logoutText: {
+-    ...materialTheme.typography.label,
+-    color: materialTheme.colors.danger,
++    borderColor: materialTheme.colors.danger,
++    marginTop: materialTheme.spacing.lg,
+   },
+ });
+diff --git a/app/(tabs)/search.tsx b/app/(tabs)/search.tsx
+index 4a74b7c..6c42505 100644
+--- a/app/(tabs)/search.tsx
++++ b/app/(tabs)/search.tsx
+@@ -8,7 +8,6 @@ import {
+   ScrollView,
+   StyleSheet,
+   Text,
+-  TextInput,
+   TouchableOpacity,
+   View,
+ } from 'react-native';
+@@ -30,6 +29,9 @@ import { useMaterialAssistant } from '@/hooks/use-material-assistant';
+ import { useSmartProductSearch } from '@/hooks/use-smart-product-search';
+ import type { MaterialAssistantProductRecommendation } from '@/services/assistant/material-assistant-service';
+ import type { SearchSuggestion } from '@/services/search/product-search-service';
++import { Input } from '@/components/ui/Input';
++import { Card } from '@/components/ui/Card';
++import { Button } from '@/components/ui/Button';
+ 
+ export default function SearchScreen() {
+   const { addToCart, quantitiesById, updateQuantity } = useCart();
+@@ -74,8 +76,6 @@ export default function SearchScreen() {
+   const showSuggestions = hasActiveQuery && suggestions.length > 0;
+   const activeCategory = categories.find((category) => category.id === activeCategoryId);
+ 
+-  // Ask the server for a quote that matches the visible results. Fire and
+-  // forget -- the UI keeps showing catalog prices until the quote returns.
+   if (results.length > 0) {
+     void requestQuote({
+       items: results.slice(0, 20).map((product) => ({
+@@ -128,38 +128,30 @@ export default function SearchScreen() {
+             size={14}
+           />
+           <Text style={styles.roleBannerText}>
+-            {roleLabel} pricing ∩┐╜ server verified
++            {roleLabel} pricing ΓÇó server verified
+           </Text>
+         </View>
+       </View>
+ 
+-      <View style={styles.searchBox}>
+-        <Ionicons
+-          color={materialTheme.colors.textMuted}
+-          name="search-outline"
+-          size={18}
+-        />
+-        <TextInput
++      <View style={styles.searchBoxWrapper}>
++        <Input
+           autoCapitalize="none"
+           autoCorrect={false}
+           onChangeText={setQuery}
+           onSubmitEditing={() => saveSearchTerm()}
+           placeholder="Search drawer slides, locks, screws..."
+-          placeholderTextColor={materialTheme.colors.textMuted}
+-          style={styles.searchInput}
+           value={query}
++          leftIcon={<Ionicons color={materialTheme.colors.textMuted} name="search-outline" size={18} />}
++          rightIcon={
++            isLoading ? (
++              <ActivityIndicator color={materialTheme.colors.primary} size="small" />
++            ) : query ? (
++              <TouchableOpacity onPress={() => setQuery('')}>
++                <Ionicons color={materialTheme.colors.textMuted} name="close-circle" size={20} />
++              </TouchableOpacity>
++            ) : undefined
++          }
+         />
+-        {isLoading ? (
+-          <ActivityIndicator color={materialTheme.colors.primary} size="small" />
+-        ) : query ? (
+-          <TouchableOpacity onPress={() => setQuery('')}>
+-            <Ionicons
+-              color={materialTheme.colors.textMuted}
+-              name="close-circle"
+-              size={20}
+-            />
+-          </TouchableOpacity>
+-        ) : null}
+       </View>
+ 
+       <MaterialAssistantPanel
+@@ -192,7 +184,7 @@ export default function SearchScreen() {
+               <SearchSkeletonCard />
+             </View>
+           ) : (
+-            <View style={styles.emptyCard}>
++            <Card style={styles.emptyCard}>
+               <Ionicons
+                 color={materialTheme.colors.textMuted}
+                 name="search-outline"
+@@ -203,16 +195,17 @@ export default function SearchScreen() {
+                 Try another keyword, remove a category filter, or use a suggestion below.
+               </Text>
+               {(hasActiveQuery || activeFilter !== 'all') ? (
+-                <TouchableOpacity
++                <Button
++                  label="Reset search"
+                   onPress={() => {
+                     setActiveFilter('all');
+                     setQuery('');
+                   }}
+-                  style={styles.resetButton}>
+-                  <Text style={styles.resetButtonText}>Reset search</Text>
+-                </TouchableOpacity>
++                  variant="secondary"
++                  style={{ marginTop: materialTheme.spacing.lg }}
++                />
+               ) : null}
+-            </View>
++            </Card>
+           )
+         }
+         ListFooterComponent={<View style={styles.footerGap} />}
+@@ -246,8 +239,8 @@ export default function SearchScreen() {
+                     style={[
+                       styles.filterChip,
+                       isActive && {
+-                        backgroundColor: `${category.accent}18`,
+-                        borderColor: category.accent,
++                        backgroundColor: `${category.accent}20`,
++                        borderColor: 'transparent',
+                       },
+                     ]}>
+                     <Text
+@@ -263,7 +256,7 @@ export default function SearchScreen() {
+             </ScrollView>
+ 
+             {showSuggestions ? (
+-              <View style={styles.suggestionCard}>
++              <Card style={styles.suggestionCard}>
+                 <SectionHeading title="Instant Suggestions" />
+                 {suggestions.map((suggestion) => (
+                   <TouchableOpacity
+@@ -295,7 +288,7 @@ export default function SearchScreen() {
+                     />
+                   </TouchableOpacity>
+                 ))}
+-              </View>
++              </Card>
+             ) : null}
+ 
+             {!hasActiveQuery ? (
+@@ -360,29 +353,31 @@ export default function SearchScreen() {
+           return (
+             <Animated.View
+               layout={LinearTransition.springify().damping(18).stiffness(220)}
+-              style={styles.resultCard}>
+-              <ProductIconBadge accent={item.accent} icon={item.icon} size={52} />
+-              <View style={styles.resultInfo}>
+-                <Text style={styles.resultCategory}>{item.category}</Text>
+-                <Text style={styles.resultName}>{item.name}</Text>
+-                <Text style={styles.resultSubtitle}>{item.subtitle}</Text>
+-                <Text style={styles.resultPrice}>{resolveDisplayPrice(item.id, formatUnitPrice(item)).primary}</Text>
+-                {resolveDisplayPrice(item.id, formatUnitPrice(item)).secondary ? (
+-                  <Text style={styles.resultPriceStrike}>
+-                    {resolveDisplayPrice(item.id, formatUnitPrice(item)).secondary}
+-                  </Text>
+-                ) : null}
+-              </View>
++              style={styles.resultCardWrapper}>
++              <Card style={styles.resultCard}>
++                <ProductIconBadge accent={item.accent} icon={item.icon} size={52} />
++                <View style={styles.resultInfo}>
++                  <Text style={styles.resultCategory}>{item.category}</Text>
++                  <Text style={styles.resultName}>{item.name}</Text>
++                  <Text style={styles.resultSubtitle}>{item.subtitle}</Text>
++                  <Text style={styles.resultPrice}>{resolveDisplayPrice(item.id, formatUnitPrice(item)).primary}</Text>
++                  {resolveDisplayPrice(item.id, formatUnitPrice(item)).secondary ? (
++                    <Text style={styles.resultPriceStrike}>
++                      {resolveDisplayPrice(item.id, formatUnitPrice(item)).secondary}
++                    </Text>
++                  ) : null}
++                </View>
+ 
+-              <QuickOrderControls
+-                bulkOptions={[5, 10, 25]}
+-                onAddOne={() => addToCart(item)}
+-                onBulkAdd={(amount) => addToCart(item, amount)}
+-                onDecrease={() => updateQuantity(item.id, quantity - 1)}
+-                onIncrease={() => updateQuantity(item.id, quantity + 1)}
+-                quantity={quantity}
+-                variant="list"
+-              />
++                <QuickOrderControls
++                  bulkOptions={[5, 10, 25]}
++                  onAddOne={() => addToCart(item)}
++                  onBulkAdd={(amount) => addToCart(item, amount)}
++                  onDecrease={() => updateQuantity(item.id, quantity - 1)}
++                  onIncrease={() => updateQuantity(item.id, quantity + 1)}
++                  quantity={quantity}
++                  variant="list"
++                />
++              </Card>
+             </Animated.View>
+           );
+         }}
+@@ -395,7 +390,7 @@ export default function SearchScreen() {
+ 
+ function SearchSkeletonCard() {
+   return (
+-    <View style={styles.resultCard}>
++    <Card style={styles.resultCard}>
+       <View style={styles.skeletonCircle} />
+       <View style={styles.resultInfo}>
+         <View style={styles.skeletonLineShort} />
+@@ -403,7 +398,7 @@ function SearchSkeletonCard() {
+         <View style={styles.skeletonLineMedium} />
+       </View>
+       <View style={styles.skeletonButton} />
+-    </View>
++    </Card>
+   );
+ }
+ 
+@@ -430,7 +425,7 @@ const styles = StyleSheet.create({
+   },
+   header: {
+     paddingHorizontal: materialTheme.screenPadding,
+-    paddingTop: 10,
++    paddingTop: materialTheme.spacing.md,
+   },
+   title: {
+     ...materialTheme.typography.h1,
+@@ -439,49 +434,35 @@ const styles = StyleSheet.create({
+   subtitle: {
+     ...materialTheme.typography.body,
+     color: materialTheme.colors.textMuted,
+-    marginTop: 6,
++    marginTop: materialTheme.spacing.sm,
+   },
+-  searchBox: {
+-    alignItems: 'center',
+-    backgroundColor: materialTheme.colors.surface,
+-    borderColor: materialTheme.colors.border,
+-    borderRadius: materialTheme.radius.md,
+-    borderWidth: 1,
+-    flexDirection: 'row',
+-    gap: 10,
++  searchBoxWrapper: {
+     marginHorizontal: materialTheme.screenPadding,
+-    marginTop: 18,
+-    paddingHorizontal: 14,
+-    paddingVertical: 14,
+-  },
+-  searchInput: {
+-    ...materialTheme.typography.body,
+-    color: materialTheme.colors.text,
+-    flex: 1,
++    marginTop: materialTheme.spacing.lg,
+   },
+   content: {
+     padding: materialTheme.screenPadding,
+-    paddingBottom: 32,
++    paddingBottom: materialTheme.spacing.xxxl,
+   },
+   resultsList: {
+     flex: 1,
+-    marginTop: 8,
++    marginTop: materialTheme.spacing.sm,
+   },
+   loadingGroup: {
+-    gap: 12,
+-    marginTop: 12,
++    gap: materialTheme.spacing.md,
++    marginTop: materialTheme.spacing.md,
+   },
+   filterRow: {
+-    gap: 10,
+-    paddingBottom: 8,
++    gap: materialTheme.spacing.sm,
++    paddingBottom: materialTheme.spacing.sm,
+   },
+   filterChip: {
+     backgroundColor: materialTheme.colors.surface,
+     borderColor: materialTheme.colors.border,
+     borderRadius: materialTheme.radius.pill,
+     borderWidth: 1,
+-    paddingHorizontal: 16,
+-    paddingVertical: 10,
++    paddingHorizontal: materialTheme.spacing.lg,
++    paddingVertical: materialTheme.spacing.sm,
+   },
+   filterChipActive: {
+     backgroundColor: materialTheme.colors.primary,
+@@ -495,29 +476,25 @@ const styles = StyleSheet.create({
+     color: materialTheme.colors.white,
+   },
+   popularSection: {
+-    marginBottom: 20,
+-    marginTop: 12,
++    marginBottom: materialTheme.spacing.xl,
++    marginTop: materialTheme.spacing.md,
+   },
+   suggestionCard: {
+-    ...materialTheme.shadow,
+-    backgroundColor: materialTheme.colors.surface,
+-    borderRadius: materialTheme.radius.lg,
+-    marginBottom: 16,
+-    marginTop: 12,
+-    padding: 16,
++    marginBottom: materialTheme.spacing.lg,
++    marginTop: materialTheme.spacing.md,
+   },
+   suggestionRow: {
+     alignItems: 'center',
+     borderBottomColor: materialTheme.colors.border,
+     borderBottomWidth: 1,
+     flexDirection: 'row',
+-    gap: 12,
+-    paddingVertical: 14,
++    gap: materialTheme.spacing.md,
++    paddingVertical: materialTheme.spacing.md,
+   },
+   suggestionIconWrap: {
+     alignItems: 'center',
+     backgroundColor: materialTheme.colors.primarySoft,
+-    borderRadius: 18,
++    borderRadius: materialTheme.radius.md,
+     height: 36,
+     justifyContent: 'center',
+     width: 36,
+@@ -532,43 +509,42 @@ const styles = StyleSheet.create({
+   suggestionDescription: {
+     ...materialTheme.typography.caption,
+     color: materialTheme.colors.textMuted,
+-    marginTop: 4,
++    marginTop: materialTheme.spacing.xs,
+   },
+   popularRow: {
+     flexDirection: 'row',
+     flexWrap: 'wrap',
+-    gap: 10,
++    gap: materialTheme.spacing.sm,
+   },
+   popularChip: {
+     alignItems: 'center',
+     backgroundColor: materialTheme.colors.surface,
+     borderRadius: materialTheme.radius.pill,
+     flexDirection: 'row',
+-    gap: 8,
+-    paddingHorizontal: 14,
+-    paddingVertical: 11,
++    gap: materialTheme.spacing.sm,
++    paddingHorizontal: materialTheme.spacing.md,
++    paddingVertical: materialTheme.spacing.sm,
+   },
+   popularChipText: {
+     ...materialTheme.typography.caption,
+     color: materialTheme.colors.text,
+   },
+   resultsSummaryCard: {
+-    marginBottom: 12,
++    marginBottom: materialTheme.spacing.md,
+   },
+   resultsSummaryText: {
+     ...materialTheme.typography.caption,
+     color: materialTheme.colors.textMuted,
+-    marginTop: -6,
++    marginTop: -materialTheme.spacing.xs,
++  },
++  resultCardWrapper: {
++    marginBottom: materialTheme.spacing.md,
+   },
+   resultCard: {
+-    ...materialTheme.shadow,
+     alignItems: 'flex-start',
+-    backgroundColor: materialTheme.colors.surface,
+-    borderRadius: materialTheme.radius.md,
+     flexDirection: 'row',
+-    gap: 14,
+-    marginBottom: 12,
+-    padding: 16,
++    gap: materialTheme.spacing.md,
++    padding: materialTheme.spacing.lg,
+   },
+   resultInfo: {
+     flex: 1,
+@@ -580,22 +556,22 @@ const styles = StyleSheet.create({
+   resultName: {
+     ...materialTheme.typography.h3,
+     color: materialTheme.colors.text,
+-    marginTop: 4,
++    marginTop: materialTheme.spacing.xs,
+   },
+   resultSubtitle: {
+     ...materialTheme.typography.caption,
+     color: materialTheme.colors.textMuted,
+-    marginTop: 6,
++    marginTop: materialTheme.spacing.sm,
+   },
+   resultPrice: {
+     ...materialTheme.typography.label,
+     color: materialTheme.colors.primary,
+-    marginTop: 10,
++    marginTop: materialTheme.spacing.sm,
+   },
+   resultPriceStrike: {
+     ...materialTheme.typography.caption,
+     color: materialTheme.colors.textMuted,
+-    marginTop: 2,
++    marginTop: materialTheme.spacing.xs,
+     textDecorationLine: 'line-through',
+   },
+   roleBanner: {
+@@ -604,10 +580,10 @@ const styles = StyleSheet.create({
+     backgroundColor: materialTheme.colors.primarySoft,
+     borderRadius: materialTheme.radius.pill,
+     flexDirection: 'row',
+-    gap: 8,
+-    marginTop: 12,
+-    paddingHorizontal: 12,
+-    paddingVertical: 8,
++    gap: materialTheme.spacing.sm,
++    marginTop: materialTheme.spacing.md,
++    paddingHorizontal: materialTheme.spacing.md,
++    paddingVertical: materialTheme.spacing.sm,
+   },
+   roleBannerText: {
+     ...materialTheme.typography.caption,
+@@ -615,33 +591,20 @@ const styles = StyleSheet.create({
+   },
+   emptyCard: {
+     alignItems: 'center',
+-    backgroundColor: materialTheme.colors.surface,
+-    borderRadius: materialTheme.radius.lg,
+-    marginTop: 12,
+-    padding: 28,
++    marginTop: materialTheme.spacing.md,
++    padding: materialTheme.spacing.xxl,
+   },
+   emptyTitle: {
+     ...materialTheme.typography.h3,
+     color: materialTheme.colors.text,
+-    marginTop: 12,
++    marginTop: materialTheme.spacing.md,
+   },
+   emptyText: {
+     ...materialTheme.typography.body,
+     color: materialTheme.colors.textMuted,
+-    marginTop: 8,
++    marginTop: materialTheme.spacing.sm,
+     textAlign: 'center',
+   },
+-  resetButton: {
+-    backgroundColor: materialTheme.colors.primarySoft,
+-    borderRadius: materialTheme.radius.pill,
+-    marginTop: 18,
+-    paddingHorizontal: 16,
+-    paddingVertical: 12,
+-  },
+-  resetButtonText: {
+-    ...materialTheme.typography.label,
+-    color: materialTheme.colors.primary,
+-  },
+   skeletonCircle: {
+     backgroundColor: materialTheme.colors.surfaceMuted,
+     borderRadius: 26,
+@@ -658,14 +621,14 @@ const styles = StyleSheet.create({
+     backgroundColor: materialTheme.colors.surfaceMuted,
+     borderRadius: 999,
+     height: 14,
+-    marginTop: 8,
++    marginTop: materialTheme.spacing.sm,
+     width: '84%',
+   },
+   skeletonLineMedium: {
+     backgroundColor: materialTheme.colors.surfaceMuted,
+     borderRadius: 999,
+     height: 12,
+-    marginTop: 10,
++    marginTop: materialTheme.spacing.sm,
+     width: '58%',
+   },
+   skeletonButton: {
+@@ -675,18 +638,6 @@ const styles = StyleSheet.create({
+     width: 56,
+   },
+   footerGap: {
+-    height: 24,
++    height: materialTheme.spacing.xxl,
+   },
+ });
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+diff --git a/app/index.tsx b/app/index.tsx
+index 6047370..7f8b671 100644
+--- a/app/index.tsx
++++ b/app/index.tsx
+@@ -6,16 +6,16 @@ import {
+   Alert,
+   KeyboardAvoidingView,
+   Platform,
+-  
+   ScrollView,
+   StyleSheet,
+   Text,
+-  TextInput,
+   TouchableOpacity,
+   View,
+ } from 'react-native';
+ 
+ import { materialTheme } from '@/constants/material-theme';
++import { Button } from '@/components/ui/Button';
++import { Input } from '@/components/ui/Input';
+ 
+ type AuthMode = 'login' | 'signup';
+ 
+@@ -205,14 +205,13 @@ export default function AuthScreen() {
+                   value={loginPassword}
+                 />
+ 
+-                <TouchableOpacity style={styles.primaryButton} onPress={handleLogin}>
+-                  <Text style={styles.primaryButtonText}>Login</Text>
+-                  <Ionicons
+-                    color={materialTheme.colors.white}
+-                    name="arrow-forward"
+-                    size={18}
+-                  />
+-                </TouchableOpacity>
++                <Button
++                  label="Login"
++                  onPress={handleLogin}
++                  icon={<Ionicons color={materialTheme.colors.white} name="arrow-forward" size={18} />}
++                  iconPosition="right"
++                  style={{ marginTop: materialTheme.spacing.xl }}
++                />
+ 
+                 <Text style={styles.helperText}>
+                   Demo OTP auto-fills after tapping Send OTP.
+@@ -226,11 +225,9 @@ export default function AuthScreen() {
+                 </Text>
+ 
+                 <FieldLabel label="Full Name" />
+-                <TextInput
++                <Input
+                   onChangeText={setSignupName}
+                   placeholder="Rahul Kumar"
+-                  placeholderTextColor={materialTheme.colors.textMuted}
+-                  style={styles.textInput}
+                   value={signupName}
+                 />
+ 
+@@ -252,14 +249,13 @@ export default function AuthScreen() {
+                   value={signupPassword}
+                 />
+ 
+-                <TouchableOpacity style={styles.primaryButton} onPress={handleSignup}>
+-                  <Text style={styles.primaryButtonText}>Create Account</Text>
+-                  <Ionicons
+-                    color={materialTheme.colors.white}
+-                    name="checkmark"
+-                    size={18}
+-                  />
+-                </TouchableOpacity>
++                <Button
++                  label="Create Account"
++                  onPress={handleSignup}
++                  icon={<Ionicons color={materialTheme.colors.white} name="checkmark" size={18} />}
++                  iconPosition="right"
++                  style={{ marginTop: materialTheme.spacing.xl }}
++                />
+               </>
+             )}
+           </View>
+@@ -281,21 +277,19 @@ function PhoneField({
+   onChangeText: (value: string) => void;
+ }) {
+   return (
+-    <View style={styles.compoundField}>
+-      <View style={styles.leadingSegment}>
+-        <Ionicons color={materialTheme.colors.primary} name="call-outline" size={18} />
+-        <Text style={styles.leadingSegmentText}>+91</Text>
+-      </View>
+-      <TextInput
+-        keyboardType="number-pad"
+-        maxLength={10}
+-        onChangeText={onChangeText}
+-        placeholder="9876543210"
+-        placeholderTextColor={materialTheme.colors.textMuted}
+-        style={styles.compoundInput}
+-        value={value}
+-      />
+-    </View>
++    <Input
++      keyboardType="number-pad"
++      maxLength={10}
++      onChangeText={onChangeText}
++      placeholder="9876543210"
++      value={value}
++      leftIcon={
++        <View style={styles.phonePrefixContainer}>
++          <Ionicons color={materialTheme.colors.primary} name="call-outline" size={18} />
++          <Text style={styles.phonePrefixText}>+91</Text>
++        </View>
++      }
++    />
+   );
+ }
+ 
+@@ -310,18 +304,15 @@ function OtpRow({
+ }) {
+   return (
+     <View style={styles.otpRow}>
+-      <TextInput
++      <Input
++        containerStyle={styles.otpInput}
+         keyboardType="number-pad"
+         maxLength={6}
+         onChangeText={onChangeText}
+         placeholder="Enter 6-digit OTP"
+-        placeholderTextColor={materialTheme.colors.textMuted}
+-        style={[styles.textInput, styles.otpInput]}
+         value={value}
+       />
+-      <TouchableOpacity onPress={onSend} style={styles.secondaryButton}>
+-        <Text style={styles.secondaryButtonText}>Send OTP</Text>
+-      </TouchableOpacity>
++      <Button label="Send OTP" onPress={onSend} variant="secondary" />
+     </View>
+   );
+ }
+@@ -338,26 +329,22 @@ function PasswordField({
+   onToggleVisibility: () => void;
+ }) {
+   return (
+-    <View style={styles.compoundField}>
+-      <View style={styles.leadingSegment}>
+-        <Ionicons color={materialTheme.colors.primary} name="lock-closed-outline" size={18} />
+-      </View>
+-      <TextInput
+-        onChangeText={onChangeText}
+-        placeholder="Enter your password"
+-        placeholderTextColor={materialTheme.colors.textMuted}
+-        secureTextEntry={secureTextEntry}
+-        style={styles.compoundInput}
+-        value={value}
+-      />
+-      <TouchableOpacity onPress={onToggleVisibility} style={styles.trailingButton}>
+-        <Ionicons
+-          color={materialTheme.colors.textMuted}
+-          name={secureTextEntry ? 'eye-outline' : 'eye-off-outline'}
+-          size={18}
+-        />
+-      </TouchableOpacity>
+-    </View>
++    <Input
++      onChangeText={onChangeText}
++      placeholder="Enter your password"
++      secureTextEntry={secureTextEntry}
++      value={value}
++      leftIcon={<Ionicons color={materialTheme.colors.primary} name="lock-closed-outline" size={18} />}
++      rightIcon={
++        <TouchableOpacity onPress={onToggleVisibility}>
++          <Ionicons
++            color={materialTheme.colors.textMuted}
++            name={secureTextEntry ? 'eye-outline' : 'eye-off-outline'}
++            size={18}
++          />
++        </TouchableOpacity>
++      }
++    />
+   );
+ }
+ 
+@@ -373,7 +360,6 @@ const styles = StyleSheet.create({
+     backgroundColor: materialTheme.colors.accentSoft,
+     borderRadius: 220,
+     height: 220,
+-    opacity: 0.8,
+     position: 'absolute',
+     right: -80,
+     top: -40,
+@@ -385,26 +371,25 @@ const styles = StyleSheet.create({
+     bottom: 80,
+     height: 180,
+     left: -60,
+-    opacity: 0.7,
+     position: 'absolute',
+     width: 180,
+   },
+   scrollContent: {
+     padding: materialTheme.screenPadding,
+-    paddingBottom: 32,
++    paddingBottom: materialTheme.spacing.xxxl,
+   },
+   heroCard: {
+     ...materialTheme.shadow,
+     backgroundColor: materialTheme.colors.surface,
+     borderRadius: materialTheme.radius.lg,
+-    marginTop: 12,
+-    padding: 24,
++    marginTop: materialTheme.spacing.md,
++    padding: materialTheme.spacing.xxl,
+   },
+   logoMark: {
+     alignItems: 'center',
+     flexDirection: 'row',
+     gap: 10,
+-    marginBottom: 18,
++    marginBottom: materialTheme.spacing.lg,
+   },
+   logoRail: {
+     backgroundColor: materialTheme.colors.primary,
+@@ -425,19 +410,19 @@ const styles = StyleSheet.create({
+   tagline: {
+     ...materialTheme.typography.body,
+     color: materialTheme.colors.textMuted,
+-    marginTop: 10,
++    marginTop: materialTheme.spacing.sm,
+   },
+   heroHighlights: {
+     flexDirection: 'row',
+     flexWrap: 'wrap',
+     gap: 10,
+-    marginTop: 22,
++    marginTop: materialTheme.spacing.xl,
+   },
+   highlightChip: {
+     backgroundColor: materialTheme.colors.surfaceMuted,
+     borderRadius: materialTheme.radius.pill,
+-    paddingHorizontal: 14,
+-    paddingVertical: 10,
++    paddingHorizontal: materialTheme.spacing.sm,
++    paddingVertical: materialTheme.spacing.xs,
+   },
+   highlightChipText: {
+     ...materialTheme.typography.caption,
+@@ -447,8 +432,8 @@ const styles = StyleSheet.create({
+     ...materialTheme.shadow,
+     backgroundColor: materialTheme.colors.surface,
+     borderRadius: materialTheme.radius.lg,
+-    marginTop: 20,
+-    padding: 20,
++    marginTop: materialTheme.spacing.xl,
++    padding: materialTheme.spacing.xl,
+   },
+   authToggle: {
+     backgroundColor: materialTheme.colors.surfaceMuted,
+@@ -460,14 +445,14 @@ const styles = StyleSheet.create({
+     alignItems: 'center',
+     borderRadius: materialTheme.radius.pill,
+     flex: 1,
+-    paddingVertical: 12,
++    paddingVertical: materialTheme.spacing.md,
+   },
+   authToggleButtonActive: {
+     backgroundColor: materialTheme.colors.primary,
+   },
+   authToggleText: {
+     ...materialTheme.typography.label,
+-    color: materialTheme.colors.primary,
++    color: materialTheme.colors.text,
+   },
+   authToggleTextActive: {
+     color: materialTheme.colors.white,
+@@ -475,100 +460,43 @@ const styles = StyleSheet.create({
+   sectionTitle: {
+     ...materialTheme.typography.h2,
+     color: materialTheme.colors.text,
+-    marginTop: 20,
++    marginTop: materialTheme.spacing.xl,
+   },
+   sectionText: {
+     ...materialTheme.typography.body,
+     color: materialTheme.colors.textMuted,
+-    marginTop: 6,
++    marginTop: materialTheme.spacing.xs,
+   },
+   fieldLabel: {
+     ...materialTheme.typography.label,
+     color: materialTheme.colors.text,
+-    marginBottom: 8,
+-    marginTop: 18,
+-  },
+-  textInput: {
+-    ...materialTheme.typography.body,
+-    backgroundColor: materialTheme.colors.white,
+-    borderColor: materialTheme.colors.border,
+-    borderRadius: materialTheme.radius.md,
+-    borderWidth: 1,
+-    color: materialTheme.colors.text,
+-    paddingHorizontal: 16,
+-    paddingVertical: 15,
+-  },
+-  compoundField: {
+-    alignItems: 'center',
+-    backgroundColor: materialTheme.colors.white,
+-    borderColor: materialTheme.colors.border,
+-    borderRadius: materialTheme.radius.md,
+-    borderWidth: 1,
+-    flexDirection: 'row',
+-    overflow: 'hidden',
+-  },
+-  leadingSegment: {
+-    alignItems: 'center',
+-    borderRightColor: materialTheme.colors.border,
+-    borderRightWidth: 1,
+-    flexDirection: 'row',
+-    gap: 8,
+-    paddingHorizontal: 14,
+-    paddingVertical: 15,
+-  },
+-  leadingSegmentText: {
+-    ...materialTheme.typography.body,
+-    color: materialTheme.colors.primary,
+-  },
+-  compoundInput: {
+-    ...materialTheme.typography.body,
+-    color: materialTheme.colors.text,
+-    flex: 1,
+-    paddingHorizontal: 14,
+-    paddingVertical: 15,
++    marginBottom: materialTheme.spacing.sm,
++    marginTop: materialTheme.spacing.lg,
+   },
+   otpRow: {
+     alignItems: 'center',
+     flexDirection: 'row',
+-    gap: 10,
++    gap: materialTheme.spacing.md,
+   },
+   otpInput: {
+     flex: 1,
+   },
+-  secondaryButton: {
++  phonePrefixContainer: {
+     alignItems: 'center',
+-    backgroundColor: materialTheme.colors.accentSoft,
+-    borderRadius: materialTheme.radius.md,
+-    justifyContent: 'center',
+-    paddingHorizontal: 16,
+-    paddingVertical: 15,
+-  },
+-  secondaryButtonText: {
+-    ...materialTheme.typography.label,
+-    color: materialTheme.colors.primary,
+-  },
+-  trailingButton: {
+-    paddingHorizontal: 14,
+-    paddingVertical: 15,
+-  },
+-  primaryButton: {
+-    alignItems: 'center',
+-    backgroundColor: materialTheme.colors.primary,
+-    borderRadius: materialTheme.radius.md,
++    borderRightColor: materialTheme.colors.border,
++    borderRightWidth: 1,
+     flexDirection: 'row',
+     gap: 8,
+-    justifyContent: 'center',
+-    marginTop: 24,
+-    paddingVertical: 16,
++    paddingRight: materialTheme.spacing.sm,
+   },
+-  primaryButtonText: {
+-    ...materialTheme.typography.h3,
+-    color: materialTheme.colors.white,
++  phonePrefixText: {
++    ...materialTheme.typography.body,
++    color: materialTheme.colors.primary,
+   },
+   helperText: {
+     ...materialTheme.typography.caption,
+     color: materialTheme.colors.textMuted,
+-    marginTop: 14,
++    marginTop: materialTheme.spacing.md,
+     textAlign: 'center',
+   },
+ });
+diff --git a/components/haptic-tab.tsx b/components/haptic-tab.tsx
+index f73cdb3..a408f60 100644
+--- a/components/haptic-tab.tsx
++++ b/components/haptic-tab.tsx
+@@ -1,8 +1,7 @@
+ import * as Haptics from 'expo-haptics';
+ import type { ComponentProps } from 'react';
+ import { Pressable } from 'react-native';
+-
+-export function HapticTab(props: ComponentProps<typeof Pressable>) {
++export function HapticTab(props: any) {
+   return (
+     <Pressable
+       {...props}
+diff --git a/components/material-primitives.tsx b/components/material-primitives.tsx
+index bc4f5e9..1445306 100644
+--- a/components/material-primitives.tsx
++++ b/components/material-primitives.tsx
+@@ -31,7 +31,7 @@ export function SectionHeading({
+     <View style={styles.sectionRow}>
+       <Text style={styles.sectionTitle}>{title}</Text>
+       {actionLabel && onPressAction ? (
+-        <TouchableOpacity onPress={onPressAction}>
++        <TouchableOpacity activeOpacity={0.7} onPress={onPressAction}>
+           <Text style={styles.sectionAction}>{actionLabel}</Text>
+         </TouchableOpacity>
+       ) : null}
+@@ -52,7 +52,7 @@ export function ProductIconBadge({
+           width: size,
+           height: size,
+           borderRadius: size / 2,
+-          backgroundColor: `${accent}1A`,
++          backgroundColor: `${accent}20`,
+         },
+       ]}>
+       <Ionicons
+@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
+     alignItems: 'center',
+     flexDirection: 'row',
+     justifyContent: 'space-between',
+-    marginBottom: 14,
++    marginBottom: materialTheme.spacing.md,
+   },
+   sectionTitle: {
+     ...materialTheme.typography.h3,
+@@ -95,12 +95,12 @@ const styles = StyleSheet.create({
+   },
+   sectionAction: {
+     ...materialTheme.typography.label,
+-    color: materialTheme.colors.terracotta,
++    color: materialTheme.colors.primary,
+   },
+   iconBadge: {
+     alignItems: 'center',
+-    borderWidth: 1,
+-    borderColor: materialTheme.colors.border,
++    borderColor: 'transparent',
++    borderWidth: 0, // removed border for cleaner look in dark mode
+     justifyContent: 'center',
+   },
+   stepper: {
+@@ -108,9 +108,9 @@ const styles = StyleSheet.create({
+     backgroundColor: materialTheme.colors.primarySoft,
+     borderRadius: materialTheme.radius.pill,
+     flexDirection: 'row',
+-    gap: 8,
+-    paddingHorizontal: 4,
+-    paddingVertical: 4,
++    gap: materialTheme.spacing.sm,
++    paddingHorizontal: materialTheme.spacing.xs,
++    paddingVertical: materialTheme.spacing.xs,
+   },
+   stepperButton: {
+     alignItems: 'center',
+diff --git a/components/order-tracking.tsx b/components/order-tracking.tsx
+index b367d05..d2b8bad 100644
+--- a/components/order-tracking.tsx
++++ b/components/order-tracking.tsx
+@@ -23,17 +23,8 @@ import {
+   type TrackingSource,
+   type TrackingTimelineStep,
+ } from '@/services/orders/order-tracking-service';
+-
+-export const orderTrackingPalette = {
+-  background: '#07110E',
+-  border: '#183028',
+-  liveGlow: '#4EE29B',
+-  muted: '#8CA298',
+-  panel: '#0D1714',
+-  panelElevated: '#11201C',
+-  text: '#F6F3ED',
+-  warning: '#DAB35D',
+-};
++import { Card } from '@/components/ui/Card';
++import { Button } from '@/components/ui/Button';
+ 
+ type LiveOrderTrackingCardProps = {
+   cityLabel: string;
+@@ -80,95 +71,95 @@ export function LiveOrderTrackingCard({
+     <Animated.View
+       entering={FadeInDown.duration(220)}
+       layout={LinearTransition.springify().damping(18).stiffness(220)}
+-      style={styles.liveCard}>
+-      <View style={styles.liveHeader}>
+-        <View style={styles.liveHeaderRow}>
+-          <Animated.View style={[styles.liveDot, pulseStyle]} />
+-          <Text style={styles.liveHeaderLabel}>Live delivery</Text>
+-        </View>
+-        <View style={styles.liveBadgeRow}>
+-          <View style={styles.cityBadge}>
+-            <Text style={styles.cityBadgeText}>{cityLabel}</Text>
++      style={styles.liveCardWrapper}>
++      <Card style={styles.liveCard}>
++        <View style={styles.liveHeader}>
++          <View style={styles.liveHeaderRow}>
++            <Animated.View style={[styles.liveDot, pulseStyle]} />
++            <Text style={styles.liveHeaderLabel}>Live delivery</Text>
+           </View>
+-          <View
+-            style={[
+-              styles.sourceBadge,
+-              isPreviewMode && styles.sourceBadgePreview,
+-            ]}>
+-            <Text
++          <View style={styles.liveBadgeRow}>
++            <View style={styles.cityBadge}>
++              <Text style={styles.cityBadgeText}>{cityLabel}</Text>
++            </View>
++            <View
+               style={[
+-                styles.sourceBadgeText,
+-                isPreviewMode && styles.sourceBadgeTextPreview,
++                styles.sourceBadge,
++                isPreviewMode && styles.sourceBadgePreview,
+               ]}>
+-              {isPreviewMode ? 'Preview sync' : 'Firebase live'}
+-            </Text>
++              <Text
++                style={[
++                  styles.sourceBadgeText,
++                  isPreviewMode && styles.sourceBadgeTextPreview,
++                ]}>
++                {isPreviewMode ? 'Preview sync' : 'Firebase live'}
++              </Text>
++            </View>
+           </View>
+         </View>
+-      </View>
+ 
+-      <Text style={styles.orderId}>{order.id}</Text>
+-      <Text style={styles.liveUpdate}>{order.liveUpdate}</Text>
++        <Text style={styles.orderId}>{order.id}</Text>
++        <Text style={styles.liveUpdate}>{order.liveUpdate}</Text>
+ 
+-      <View style={styles.metricGrid}>
+-        <TrackingMetric
+-          icon="time-outline"
+-          label="Arrival"
+-          value={order.etaLabel ?? 'Updating'}
+-        />
+-        <TrackingMetric
+-          icon="business-outline"
+-          label="Hub"
+-          value={order.hubName}
+-        />
+-        <TrackingMetric
+-          icon="navigate-outline"
+-          label="Zone"
+-          value={order.deliveryZone}
+-        />
+-      </View>
+-
+-      <View style={styles.progressShell}>
+-        <View style={styles.progressTrack}>
+-          <Animated.View style={[styles.progressFill, progressStyle]} />
+-        </View>
+-        <View style={styles.progressLabels}>
+-          <Text style={styles.progressLabel}>
+-            {Math.round(order.progress * 100)}% route complete
+-          </Text>
+-          <Text style={styles.progressUpdateText}>{order.updatedAtLabel}</Text>
++        <View style={styles.metricGrid}>
++          <TrackingMetric
++            icon="time-outline"
++            label="Arrival"
++            value={order.etaLabel ?? 'Updating'}
++          />
++          <TrackingMetric
++            icon="business-outline"
++            label="Hub"
++            value={order.hubName}
++          />
++          <TrackingMetric
++            icon="navigate-outline"
++            label="Zone"
++            value={order.deliveryZone}
++          />
+         </View>
+-      </View>
+ 
+-      {order.rider ? (
+-        <View style={styles.riderCard}>
+-          <View style={styles.riderAvatar}>
+-            <Ionicons
+-              color={orderTrackingPalette.liveGlow}
+-              name="bicycle-outline"
+-              size={18}
+-            />
++        <View style={styles.progressShell}>
++          <View style={styles.progressTrack}>
++            <Animated.View style={[styles.progressFill, progressStyle]} />
+           </View>
+-          <View style={styles.riderInfo}>
+-            <Text style={styles.riderLabel}>Assigned rider</Text>
+-            <Text style={styles.riderName}>{order.rider.name}</Text>
+-            <Text style={styles.riderMeta}>
+-              {order.rider.vehicleLabel} / {order.rider.zone}
++          <View style={styles.progressLabels}>
++            <Text style={styles.progressLabel}>
++              {Math.round(order.progress * 100)}% route complete
+             </Text>
++            <Text style={styles.progressUpdateText}>{order.updatedAtLabel}</Text>
+           </View>
+         </View>
+-      ) : null}
+ 
+-      <OrderTimeline steps={order.timeline} />
++        {order.rider ? (
++          <View style={styles.riderCard}>
++            <View style={styles.riderAvatar}>
++              <Ionicons
++                color={materialTheme.colors.primary}
++                name="bicycle-outline"
++                size={18}
++              />
++            </View>
++            <View style={styles.riderInfo}>
++              <Text style={styles.riderLabel}>Assigned rider</Text>
++              <Text style={styles.riderName}>{order.rider.name}</Text>
++              <Text style={styles.riderMeta}>
++                {order.rider.vehicleLabel} / {order.rider.zone}
++              </Text>
++            </View>
++          </View>
++        ) : null}
++
++        <OrderTimeline steps={order.timeline} />
+ 
+-      <View style={styles.liveFooter}>
+-        <View>
+-          <Text style={styles.footerLabel}>Order total</Text>
+-          <Text style={styles.footerValue}>{formatCurrency(order.total)}</Text>
++        <View style={styles.liveFooter}>
++          <View>
++            <Text style={styles.footerLabel}>Order total</Text>
++            <Text style={styles.footerValue}>{formatCurrency(order.total)}</Text>
++          </View>
++          <Button label="Reorder same kit" onPress={onReorder} />
+         </View>
+-        <TouchableOpacity onPress={onReorder} style={styles.reorderButton}>
+-          <Text style={styles.reorderButtonText}>Reorder same kit</Text>
+-        </TouchableOpacity>
+-      </View>
++      </Card>
+     </Animated.View>
+   );
+ }
+@@ -185,70 +176,79 @@ export function OrderHistoryCard({
+   return (
+     <Animated.View
+       layout={LinearTransition.springify().damping(18).stiffness(220)}
+-      style={styles.historyCard}>
+-      <View style={styles.historyHeader}>
+-        <View style={styles.historyHeaderInfo}>
+-          <Text style={styles.historyOrderId}>{order.id}</Text>
+-          <Text style={styles.historyDate}>{order.date}</Text>
+-        </View>
+-        <View
+-          style={[
+-            styles.statusBadge,
+-            { backgroundColor: `${order.statusAccent}22` },
+-          ]}>
+-          <Text style={[styles.statusBadgeText, { color: order.statusAccent }]}>
+-            {order.statusLabel}
+-          </Text>
+-        </View>
+-      </View>
+-
+-      <Text style={styles.historySummary}>{order.itemSummary}</Text>
+-      <View style={styles.historyMetaRow}>
+-        <View style={styles.historyMetaChip}>
+-          <Ionicons
+-            color={orderTrackingPalette.muted}
+-            name="layers-outline"
+-            size={14}
+-          />
+-          <Text style={styles.historyMetaText}>{reorderSummary}</Text>
++      style={styles.historyCardWrapper}>
++      <Card style={styles.historyCard}>
++        <View style={styles.historyHeader}>
++          <View style={styles.historyHeaderInfo}>
++            <Text style={styles.historyOrderId}>{order.id}</Text>
++            <Text style={styles.historyDate}>{order.date}</Text>
++          </View>
++          <View
++            style={[
++              styles.statusBadge,
++              { backgroundColor: `${order.statusAccent}22` },
++            ]}>
++            <Text style={[styles.statusBadgeText, { color: order.statusAccent }]}>
++              {order.statusLabel}
++            </Text>
++          </View>
+         </View>
+-      </View>
+ 
+-      {showMiniProgress ? (
+-        <View style={styles.historyProgressWrap}>
+-          <View style={styles.historyProgressTrack}>
+-            <View
+-              style={[
+-                styles.historyProgressFill,
+-                { width: `${Math.max(order.progress, 0.08) * 100}%` },
+-              ]}
++        <Text style={styles.historySummary}>{order.itemSummary}</Text>
++        <View style={styles.historyMetaRow}>
++          <View style={styles.historyMetaChip}>
++            <Ionicons
++              color={materialTheme.colors.textMuted}
++              name="layers-outline"
++              size={14}
+             />
++            <Text style={styles.historyMetaText}>{reorderSummary}</Text>
+           </View>
+-          <Text style={styles.historyProgressText}>
+-            {order.etaLabel ?? order.updatedAtLabel}
+-          </Text>
+         </View>
+-      ) : null}
+ 
+-      <View style={styles.historyFooter}>
+-        <View style={styles.historyFooterTopRow}>
+-          <View>
+-            <Text style={styles.footerLabel}>Order total</Text>
+-            <Text style={styles.footerValue}>{formatCurrency(order.total)}</Text>
++        {showMiniProgress ? (
++          <View style={styles.historyProgressWrap}>
++            <View style={styles.historyProgressTrack}>
++              <View
++                style={[
++                  styles.historyProgressFill,
++                  { width: `${Math.max(order.progress, 0.08) * 100}%` },
++                ]}
++              />
++            </View>
++            <Text style={styles.historyProgressText}>
++              {order.etaLabel ?? order.updatedAtLabel}
++            </Text>
++          </View>
++        ) : null}
++
++        <View style={styles.historyFooter}>
++          <View style={styles.historyFooterTopRow}>
++            <View>
++              <Text style={styles.footerLabel}>Order total</Text>
++              <Text style={styles.footerValue}>{formatCurrency(order.total)}</Text>
++            </View>
++            <Button
++              label="Repeat full cart"
++              onPress={onRepeatCart}
++              variant="secondary"
++            />
++          </View>
++          <View style={styles.historyActionRow}>
++            <Button
++              label="Add to current cart"
++              onPress={onReorder}
++              variant="outline"
++              style={{ flex: 1 }}
++            />
++            <Button
++              label="Checkout now"
++              onPress={onCheckout}
++              style={{ flex: 1 }}
++            />
+           </View>
+-          <TouchableOpacity onPress={onRepeatCart} style={styles.historyRepeatButton}>
+-            <Text style={styles.historyRepeatText}>Repeat full cart</Text>
+-          </TouchableOpacity>
+-        </View>
+-        <View style={styles.historyActionRow}>
+-          <TouchableOpacity onPress={onReorder} style={styles.historySecondaryButton}>
+-            <Text style={styles.historySecondaryButtonText}>Add to current cart</Text>
+-          </TouchableOpacity>
+-          <TouchableOpacity onPress={onCheckout} style={styles.historyCheckoutButton}>
+-            <Text style={styles.historyCheckoutButtonText}>Checkout now</Text>
+-          </TouchableOpacity>
+         </View>
+-      </View>
++      </Card>
+     </Animated.View>
+   );
+ }
+@@ -264,7 +264,7 @@ function TrackingMetric({
+ }) {
+   return (
+     <View style={styles.metricCard}>
+-      <Ionicons color={orderTrackingPalette.muted} name={icon} size={16} />
++      <Ionicons color={materialTheme.colors.textMuted} name={icon} size={16} />
+       <Text style={styles.metricLabel}>{label}</Text>
+       <Text style={styles.metricValue}>{value}</Text>
+     </View>
+@@ -316,8 +316,8 @@ function OrderTimeline({ steps }: { steps: TrackingTimelineStep[] }) {
+ 
+ const styles = StyleSheet.create({
+   cityBadge: {
+-    backgroundColor: '#14211D',
+-    borderColor: '#1F3A31',
++    backgroundColor: materialTheme.colors.surfaceMuted,
++    borderColor: materialTheme.colors.border,
+     borderRadius: materialTheme.radius.pill,
+     borderWidth: 1,
+     paddingHorizontal: 12,
+@@ -325,35 +325,33 @@ const styles = StyleSheet.create({
+   },
+   cityBadgeText: {
+     ...materialTheme.typography.caption,
+-    color: orderTrackingPalette.text,
++    color: materialTheme.colors.text,
+   },
+   footerLabel: {
+     ...materialTheme.typography.caption,
+-    color: orderTrackingPalette.muted,
++    color: materialTheme.colors.textMuted,
+   },
+   footerValue: {
+     ...materialTheme.typography.h3,
+-    color: orderTrackingPalette.text,
++    color: materialTheme.colors.text,
+     marginTop: 6,
+   },
++  historyCardWrapper: {
++    marginTop: materialTheme.spacing.lg,
++  },
+   historyCard: {
+-    backgroundColor: orderTrackingPalette.panel,
+-    borderColor: orderTrackingPalette.border,
+-    borderRadius: materialTheme.radius.lg,
+-    borderWidth: 1,
+-    marginTop: 16,
+-    padding: 18,
++    padding: materialTheme.spacing.lg,
+   },
+   historyDate: {
+     ...materialTheme.typography.caption,
+-    color: orderTrackingPalette.muted,
++    color: materialTheme.colors.textMuted,
+     marginTop: 5,
+   },
+   historyFooter: {
+-    borderTopColor: orderTrackingPalette.border,
++    borderTopColor: materialTheme.colors.border,
+     borderTopWidth: 1,
+     gap: 12,
+-    marginTop: 18,
++    marginTop: materialTheme.spacing.lg,
+     paddingTop: 16,
+   },
+   historyFooterTopRow: {
+@@ -372,20 +370,20 @@ const styles = StyleSheet.create({
+   },
+   historyOrderId: {
+     ...materialTheme.typography.h3,
+-    color: orderTrackingPalette.text,
++    color: materialTheme.colors.text,
+   },
+   historyProgressFill: {
+-    backgroundColor: orderTrackingPalette.liveGlow,
++    backgroundColor: materialTheme.colors.primary,
+     borderRadius: materialTheme.radius.pill,
+     height: '100%',
+   },
+   historyProgressText: {
+     ...materialTheme.typography.caption,
+-    color: orderTrackingPalette.muted,
++    color: materialTheme.colors.textMuted,
+     marginTop: 8,
+   },
+   historyProgressTrack: {
+-    backgroundColor: '#14211D',
++    backgroundColor: materialTheme.colors.surfaceMuted,
+     borderRadius: materialTheme.radius.pill,
+     height: 8,
+     overflow: 'hidden',
+@@ -396,24 +394,12 @@ const styles = StyleSheet.create({
+   historyActionRow: {
+     flexDirection: 'row',
+     gap: 10,
+-  },
+-  historyCheckoutButton: {
+-    alignItems: 'center',
+-    backgroundColor: orderTrackingPalette.liveGlow,
+-    borderRadius: materialTheme.radius.md,
+-    flex: 1,
+-    justifyContent: 'center',
+-    paddingHorizontal: 14,
+-    paddingVertical: 12,
+-  },
+-  historyCheckoutButtonText: {
+-    ...materialTheme.typography.caption,
+-    color: '#082316',
++    marginTop: materialTheme.spacing.sm,
+   },
+   historyMetaChip: {
+     alignItems: 'center',
+-    backgroundColor: '#14211D',
+-    borderColor: '#20352E',
++    backgroundColor: materialTheme.colors.surfaceMuted,
++    borderColor: materialTheme.colors.border,
+     borderRadius: materialTheme.radius.pill,
+     borderWidth: 1,
+     flexDirection: 'row',
+@@ -427,59 +413,32 @@ const styles = StyleSheet.create({
+   },
+   historyMetaText: {
+     ...materialTheme.typography.caption,
+-    color: orderTrackingPalette.muted,
+-  },
+-  historyRepeatButton: {
+-    backgroundColor: '#183128',
+-    borderRadius: materialTheme.radius.md,
+-    paddingHorizontal: 14,
+-    paddingVertical: 12,
+-  },
+-  historyRepeatText: {
+-    ...materialTheme.typography.caption,
+-    color: orderTrackingPalette.liveGlow,
+-  },
+-  historySecondaryButton: {
+-    alignItems: 'center',
+-    backgroundColor: '#11201C',
+-    borderColor: '#254137',
+-    borderRadius: materialTheme.radius.md,
+-    borderWidth: 1,
+-    flex: 1,
+-    justifyContent: 'center',
+-    paddingHorizontal: 14,
+-    paddingVertical: 12,
+-  },
+-  historySecondaryButtonText: {
+-    ...materialTheme.typography.caption,
+-    color: orderTrackingPalette.text,
++    color: materialTheme.colors.textMuted,
+   },
+   historySummary: {
+     ...materialTheme.typography.body,
+-    color: orderTrackingPalette.text,
++    color: materialTheme.colors.text,
+     marginTop: 16,
+   },
+   liveBadgeRow: {
+     flexDirection: 'row',
+     gap: 8,
+   },
++  liveCardWrapper: {
++    marginTop: materialTheme.spacing.lg,
++  },
+   liveCard: {
+-    backgroundColor: orderTrackingPalette.panelElevated,
+-    borderColor: '#264339',
+-    borderRadius: materialTheme.radius.lg,
+-    borderWidth: 1,
+-    marginTop: 22,
+-    padding: 20,
++    padding: materialTheme.spacing.lg,
+   },
+   liveDot: {
+-    backgroundColor: orderTrackingPalette.liveGlow,
++    backgroundColor: materialTheme.colors.success,
+     borderRadius: 5,
+     height: 10,
+     width: 10,
+   },
+   liveFooter: {
+     alignItems: 'center',
+-    borderTopColor: orderTrackingPalette.border,
++    borderTopColor: materialTheme.colors.border,
+     borderTopWidth: 1,
+     flexDirection: 'row',
+     justifyContent: 'space-between',
+@@ -493,7 +452,7 @@ const styles = StyleSheet.create({
+   },
+   liveHeaderLabel: {
+     ...materialTheme.typography.caption,
+-    color: orderTrackingPalette.liveGlow,
++    color: materialTheme.colors.success,
+     textTransform: 'uppercase',
+   },
+   liveHeaderRow: {
+@@ -503,11 +462,11 @@ const styles = StyleSheet.create({
+   },
+   liveUpdate: {
+     ...materialTheme.typography.body,
+-    color: orderTrackingPalette.text,
++    color: materialTheme.colors.text,
+     marginTop: 10,
+   },
+   metricCard: {
+-    backgroundColor: '#14211D',
++    backgroundColor: materialTheme.colors.surfaceMuted,
+     borderRadius: materialTheme.radius.md,
+     flex: 1,
+     minWidth: 92,
+@@ -521,27 +480,27 @@ const styles = StyleSheet.create({
+   },
+   metricLabel: {
+     ...materialTheme.typography.caption,
+-    color: orderTrackingPalette.muted,
++    color: materialTheme.colors.textMuted,
+     marginTop: 10,
+   },
+   metricValue: {
+     ...materialTheme.typography.label,
+-    color: orderTrackingPalette.text,
++    color: materialTheme.colors.text,
+     marginTop: 5,
+   },
+   orderId: {
+     ...materialTheme.typography.h2,
+-    color: orderTrackingPalette.text,
++    color: materialTheme.colors.text,
+     marginTop: 14,
+   },
+   progressFill: {
+-    backgroundColor: orderTrackingPalette.liveGlow,
++    backgroundColor: materialTheme.colors.primary,
+     borderRadius: materialTheme.radius.pill,
+     height: '100%',
+   },
+   progressLabel: {
+     ...materialTheme.typography.caption,
+-    color: orderTrackingPalette.text,
++    color: materialTheme.colors.text,
+   },
+   progressLabels: {
+     alignItems: 'center',
+@@ -553,28 +512,18 @@ const styles = StyleSheet.create({
+     marginTop: 18,
+   },
+   progressTrack: {
+-    backgroundColor: '#16241F',
++    backgroundColor: materialTheme.colors.surfaceMuted,
+     borderRadius: materialTheme.radius.pill,
+     height: 10,
+     overflow: 'hidden',
+   },
+   progressUpdateText: {
+     ...materialTheme.typography.caption,
+-    color: orderTrackingPalette.muted,
+-  },
+-  reorderButton: {
+-    backgroundColor: orderTrackingPalette.liveGlow,
+-    borderRadius: materialTheme.radius.md,
+-    paddingHorizontal: 16,
+-    paddingVertical: 12,
+-  },
+-  reorderButtonText: {
+-    ...materialTheme.typography.caption,
+-    color: '#082316',
++    color: materialTheme.colors.textMuted,
+   },
+   riderAvatar: {
+     alignItems: 'center',
+-    backgroundColor: '#13211C',
++    backgroundColor: materialTheme.colors.surfaceMuted,
+     borderRadius: materialTheme.radius.pill,
+     height: 40,
+     justifyContent: 'center',
+@@ -582,7 +531,9 @@ const styles = StyleSheet.create({
+   },
+   riderCard: {
+     alignItems: 'center',
+-    backgroundColor: '#13211C',
++    backgroundColor: materialTheme.colors.surface,
++    borderColor: materialTheme.colors.border,
++    borderWidth: 1,
+     borderRadius: materialTheme.radius.md,
+     flexDirection: 'row',
+     gap: 12,
+@@ -594,36 +545,36 @@ const styles = StyleSheet.create({
+   },
+   riderLabel: {
+     ...materialTheme.typography.caption,
+-    color: orderTrackingPalette.muted,
++    color: materialTheme.colors.textMuted,
+   },
+   riderMeta: {
+     ...materialTheme.typography.caption,
+-    color: orderTrackingPalette.muted,
++    color: materialTheme.colors.textMuted,
+     marginTop: 4,
+   },
+   riderName: {
+     ...materialTheme.typography.label,
+-    color: orderTrackingPalette.text,
++    color: materialTheme.colors.text,
+     marginTop: 4,
+   },
+   sourceBadge: {
+-    backgroundColor: '#13211C',
+-    borderColor: '#1F3A31',
++    backgroundColor: materialTheme.colors.surfaceMuted,
++    borderColor: materialTheme.colors.border,
+     borderRadius: materialTheme.radius.pill,
+     borderWidth: 1,
+     paddingHorizontal: 12,
+     paddingVertical: 7,
+   },
+   sourceBadgePreview: {
+-    backgroundColor: '#201B10',
+-    borderColor: '#46351A',
++    backgroundColor: materialTheme.colors.surfaceMuted,
++    borderColor: materialTheme.colors.terracotta,
+   },
+   sourceBadgeText: {
+     ...materialTheme.typography.caption,
+-    color: orderTrackingPalette.liveGlow,
++    color: materialTheme.colors.primary,
+   },
+   sourceBadgeTextPreview: {
+-    color: orderTrackingPalette.warning,
++    color: materialTheme.colors.terracotta,
+   },
+   statusBadge: {
+     borderRadius: materialTheme.radius.pill,
+@@ -639,12 +590,12 @@ const styles = StyleSheet.create({
+   },
+   timelineDetail: {
+     ...materialTheme.typography.caption,
+-    color: orderTrackingPalette.muted,
++    color: materialTheme.colors.textMuted,
+     marginTop: 5,
+   },
+   timelineDot: {
+-    backgroundColor: '#193026',
+-    borderColor: orderTrackingPalette.border,
++    backgroundColor: materialTheme.colors.surfaceMuted,
++    borderColor: materialTheme.colors.border,
+     borderRadius: 6,
+     borderWidth: 1,
+     height: 12,
+@@ -652,25 +603,25 @@ const styles = StyleSheet.create({
+     width: 12,
+   },
+   timelineDotCancelled: {
+-    backgroundColor: '#3C1714',
+-    borderColor: '#76312B',
++    backgroundColor: materialTheme.colors.danger,
++    borderColor: materialTheme.colors.danger,
+   },
+   timelineDotComplete: {
+-    backgroundColor: orderTrackingPalette.liveGlow,
+-    borderColor: orderTrackingPalette.liveGlow,
++    backgroundColor: materialTheme.colors.success,
++    borderColor: materialTheme.colors.success,
+   },
+   timelineDotCurrent: {
+-    backgroundColor: orderTrackingPalette.warning,
+-    borderColor: orderTrackingPalette.warning,
++    backgroundColor: materialTheme.colors.primary,
++    borderColor: materialTheme.colors.primary,
+   },
+   timelineLine: {
+-    backgroundColor: orderTrackingPalette.border,
++    backgroundColor: materialTheme.colors.border,
+     flex: 1,
+     marginTop: 6,
+     width: 2,
+   },
+   timelineLineComplete: {
+-    backgroundColor: orderTrackingPalette.liveGlow,
++    backgroundColor: materialTheme.colors.success,
+   },
+   timelineRail: {
+     alignItems: 'center',
+@@ -682,11 +633,11 @@ const styles = StyleSheet.create({
+   },
+   timelineTime: {
+     ...materialTheme.typography.caption,
+-    color: orderTrackingPalette.muted,
++    color: materialTheme.colors.textMuted,
+   },
+   timelineTitle: {
+     ...materialTheme.typography.label,
+-    color: orderTrackingPalette.text,
++    color: materialTheme.colors.text,
+     flex: 1,
+     paddingRight: 12,
+   },
+diff --git a/components/parallax-scroll-view.tsx b/components/parallax-scroll-view.tsx
+index 6f674a7..b2d17b2 100644
+--- a/components/parallax-scroll-view.tsx
++++ b/components/parallax-scroll-view.tsx
+@@ -24,7 +24,7 @@ export default function ParallaxScrollView({
+   headerBackgroundColor,
+ }: Props) {
+   const backgroundColor = useThemeColor({}, 'background');
+-  const colorScheme = useColorScheme() ?? 'light';
++  const colorScheme = (useColorScheme() ?? 'light') === 'dark' ? 'dark' : 'light';
+   const scrollRef = useAnimatedRef<Animated.ScrollView>();
+   const scrollOffset = useScrollOffset(scrollRef);
+   const headerAnimatedStyle = useAnimatedStyle(() => {
+diff --git a/components/quick-order.tsx b/components/quick-order.tsx
+index 32a0f7b..a609100 100644
+--- a/components/quick-order.tsx
++++ b/components/quick-order.tsx
+@@ -21,6 +21,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
+ import { formatCurrency } from '@/constants/material-data';
+ import { materialTheme } from '@/constants/material-theme';
+ import { QuantityStepper } from '@/components/material-primitives';
++import { Button } from '@/components/ui/Button';
+ 
+ type QuickOrderControlsProps = {
+   bulkOptions?: number[];
+@@ -93,16 +94,12 @@ export function QuickOrderControls({
+           exiting={FadeOut.duration(120)}
+           layout={LinearTransition.springify().damping(18)}
+           style={styles.quickOrderPrimaryRow}>
+-          <ScaleButton onPress={onAddOne} style={styles.fastAddButton}>
+-            <Text style={styles.fastAddButtonText}>
+-              {variant === 'list' ? 'Fast add' : 'Add'}
+-            </Text>
+-            <Ionicons
+-              color={materialTheme.colors.white}
+-              name="add"
+-              size={16}
+-            />
+-          </ScaleButton>
++          <Button
++            label={variant === 'list' ? 'Fast add' : 'Add'}
++            onPress={onAddOne}
++            icon={<Ionicons color={materialTheme.colors.white} name="add" size={16} />}
++            style={{ flex: 1, paddingVertical: 11 }}
++          />
+         </Animated.View>
+       )}
+ 
+@@ -224,26 +221,21 @@ export function StickyCheckoutBar({
+ 
+       <View style={styles.checkoutActions}>
+         {secondaryActionLabel && onSecondaryAction ? (
+-          <ScaleButton
++          <Button
++            label={secondaryActionLabel}
+             onPress={onSecondaryAction}
+-            style={styles.whatsAppButton}>
+-            <Ionicons
+-              color={materialTheme.colors.success}
+-              name="logo-whatsapp"
+-              size={18}
+-            />
+-            <Text style={styles.whatsAppButtonText}>{secondaryActionLabel}</Text>
+-          </ScaleButton>
++            icon={<Ionicons color={materialTheme.colors.success} name="logo-whatsapp" size={18} />}
++            variant="outline"
++            style={{ borderColor: materialTheme.colors.success }}
++            labelStyle={{ color: materialTheme.colors.success }}
++          />
+         ) : null}
+ 
+-        <ScaleButton onPress={onCheckout} style={styles.checkoutButton}>
+-          <Text style={styles.checkoutButtonText}>Proceed to checkout</Text>
+-          <Ionicons
+-            color={materialTheme.colors.white}
+-            name="arrow-forward"
+-            size={18}
+-          />
+-        </ScaleButton>
++        <Button
++          label="Proceed to checkout"
++          onPress={onCheckout}
++          icon={<Ionicons color={materialTheme.colors.white} name="arrow-forward" size={18} />}
++        />
+       </View>
+     </Animated.View>
+   );
+@@ -293,21 +285,6 @@ const styles = StyleSheet.create({
+     color: materialTheme.colors.primary,
+     marginTop: 2,
+   },
+-  fastAddButton: {
+-    alignItems: 'center',
+-    alignSelf: 'stretch',
+-    backgroundColor: materialTheme.colors.primary,
+-    borderRadius: materialTheme.radius.pill,
+-    flexDirection: 'row',
+-    gap: 6,
+-    justifyContent: 'center',
+-    paddingHorizontal: 14,
+-    paddingVertical: 11,
+-  },
+-  fastAddButtonText: {
+-    ...materialTheme.typography.label,
+-    color: materialTheme.colors.white,
+-  },
+   bulkRow: {
+     flexDirection: 'row',
+     flexWrap: 'wrap',
+@@ -392,32 +369,4 @@ const styles = StyleSheet.create({
+   checkoutActions: {
+     gap: 10,
+   },
+-  whatsAppButton: {
+-    alignItems: 'center',
+-    backgroundColor: '#EAF6EF',
+-    borderColor: '#C9E7D4',
+-    borderRadius: materialTheme.radius.md,
+-    borderWidth: 1,
+-    flexDirection: 'row',
+-    gap: 8,
+-    justifyContent: 'center',
+-    paddingVertical: 16,
+-  },
+-  whatsAppButtonText: {
+-    ...materialTheme.typography.label,
+-    color: materialTheme.colors.success,
+-  },
+-  checkoutButton: {
+-    alignItems: 'center',
+-    backgroundColor: materialTheme.colors.primary,
+-    borderRadius: materialTheme.radius.md,
+-    flexDirection: 'row',
+-    gap: 8,
+-    justifyContent: 'center',
+-    paddingVertical: 16,
+-  },
+-  checkoutButtonText: {
+-    ...materialTheme.typography.label,
+-    color: materialTheme.colors.white,
+-  },
+ });
+diff --git a/components/ui/icon-symbol.tsx b/components/ui/icon-symbol.tsx
+index b7ece6b..61b12d3 100644
+--- a/components/ui/icon-symbol.tsx
++++ b/components/ui/icon-symbol.tsx
+@@ -5,7 +5,7 @@ import { SymbolWeight, SymbolViewProps } from 'expo-symbols';
+ import { ComponentProps } from 'react';
+ import { OpaqueColorValue, type StyleProp, type TextStyle } from 'react-native';
+ 
+-type IconMapping = Record<SymbolViewProps['name'], ComponentProps<typeof MaterialIcons>['name']>;
++type IconMapping = Record<string, ComponentProps<typeof MaterialIcons>['name']>;
+ type IconSymbolName = keyof typeof MAPPING;
+ 
+ /**
+diff --git a/constants/material-theme.ts b/constants/material-theme.ts
+index 8ffcb75..b885641 100644
+--- a/constants/material-theme.ts
++++ b/constants/material-theme.ts
+@@ -16,36 +16,43 @@ const bodyFont = Platform.select({
+ 
+ export const materialTheme = {
+   colors: {
+-    background: '#F5EFE6',
+-    backgroundStrong: '#E8DEC8',
+-    surface: '#FFFCF8',
+-    surfaceMuted: '#F2E9DB',
+-    border: '#E1D5C4',
+-    text: '#18211B',
+-    textMuted: '#6A685F',
+-    primary: '#123B2C',
+-    primaryPressed: '#0D2B20',
+-    primarySoft: '#DCE8E1',
+-    accent: '#B38843',
+-    accentSoft: '#F3E4C9',
+-    terracotta: '#A55C35',
+-    terracottaSoft: '#F6E0D6',
+-    success: '#2C7A57',
+-    danger: '#A04836',
++    background: '#0F172A',
++    backgroundStrong: '#1E293B',
++    surface: '#1F2937',
++    surfaceMuted: '#374151',
++    border: 'rgba(255,255,255,0.08)',
++    text: '#FFFFFF',
++    textMuted: '#94A3B8',
++    textSecondary: '#CBD5E1',
++    primary: '#F97316',
++    primaryPressed: '#EA580C',
++    primarySoft: 'rgba(249, 115, 22, 0.15)',
++    accent: '#FB923C',
++    accentSoft: 'rgba(251, 146, 60, 0.15)',
++    terracotta: '#F97316',
++    terracottaSoft: 'rgba(249, 115, 22, 0.15)',
++    success: '#22C55E',
++    danger: '#EF4444',
++    warning: '#FACC15',
+     white: '#FFFFFF',
+   },
+   radius: {
+-    sm: 12,
++    xs: 8,
++    sm: 14,
+     md: 18,
+-    lg: 26,
++    lg: 24,
+     pill: 999,
+   },
+   spacing: {
+-    xs: 6,
+-    sm: 10,
+-    md: 16,
+-    lg: 20,
+-    xl: 28,
++    xs: 4,
++    sm: 8,
++    md: 12,
++    lg: 16,
++    xl: 20,
++    xxl: 24,
++    xxxl: 32,
++    xxxxl: 40,
++    xxxxxl: 48,
+   },
+   typography: {
+     display: {
+@@ -74,29 +81,35 @@ export const materialTheme = {
+     },
+     body: {
+       fontFamily: bodyFont,
+-      fontSize: 15,
+-      lineHeight: 22,
+-      fontWeight: '500' as const,
++      fontSize: 16,
++      lineHeight: 24,
++      fontWeight: '400' as const,
+     },
+     label: {
+       fontFamily: bodyFont,
+-      fontSize: 13,
+-      lineHeight: 18,
+-      fontWeight: '600' as const,
++      fontSize: 14,
++      lineHeight: 20,
++      fontWeight: '500' as const,
+     },
+     caption: {
+       fontFamily: bodyFont,
+       fontSize: 12,
+       lineHeight: 16,
+-      fontWeight: '500' as const,
++      fontWeight: '400' as const,
++    },
++    button: {
++      fontFamily: bodyFont,
++      fontSize: 16,
++      lineHeight: 24,
++      fontWeight: '600' as const,
+     },
+   },
+   shadow: {
+-    shadowColor: '#2D2418',
+-    shadowOffset: { width: 0, height: 10 },
+-    shadowOpacity: 0.08,
+-    shadowRadius: 24,
+-    elevation: 4,
++    shadowColor: '#000000',
++    shadowOffset: { width: 0, height: 4 },
++    shadowOpacity: 0.25,
++    shadowRadius: 12,
++    elevation: 8,
+   },
+   screenPadding: 20,
+ };
+diff --git a/hooks/use-theme-color.ts b/hooks/use-theme-color.ts
+index 0cbc3a6..c9000cf 100644
+--- a/hooks/use-theme-color.ts
++++ b/hooks/use-theme-color.ts
+@@ -10,7 +10,7 @@ export function useThemeColor(
+   props: { light?: string; dark?: string },
+   colorName: keyof typeof Colors.light & keyof typeof Colors.dark
+ ) {
+-  const theme = useColorScheme() ?? 'light';
++  const theme = (useColorScheme() ?? 'light') === 'dark' ? 'dark' : 'light';
+   const colorFromProps = props[theme];
+ 
+   if (colorFromProps) {
+diff --git a/services/orders/order-tracking-service.ts b/services/orders/order-tracking-service.ts
+index 925370e..349f59a 100644
+--- a/services/orders/order-tracking-service.ts
++++ b/services/orders/order-tracking-service.ts
+@@ -250,7 +250,7 @@ export function getTrackingCityMeta(cityId: string): TrackingCityMeta {
+ }
+ 
+ function subscribeToMockTracking({
+-  cityId,
++  cityId = DEFAULT_TRACKING_CITY_ID,
+   onUpdate,
+ }: Pick<SubscribeToTrackedOrdersParams, 'cityId' | 'onUpdate'>) {
+   const cityMeta = getTrackingCityMeta(cityId);
+diff --git a/services/vendor/vendor-data-service.ts b/services/vendor/vendor-data-service.ts
+index f4a7ff7..981e598 100644
+--- a/services/vendor/vendor-data-service.ts
++++ b/services/vendor/vendor-data-service.ts
+@@ -652,7 +652,7 @@ function buildInitialPreviewProducts(session: VendorSession) {
+   ];
+ }
+ 
+-function buildInitialPreviewOrders(session: VendorSession) {
++function buildInitialPreviewOrders(session: VendorSession): VendorOrder[] {
+   return [
+     {
+       cityId: session.cityId,
+diff --git a/tsconfig.json b/tsconfig.json
+index 7eae4a8..511cfcc 100644
+--- a/tsconfig.json
++++ b/tsconfig.json
+@@ -2,7 +2,6 @@
+   "extends": "expo/tsconfig.base",
+   "compilerOptions": {
+     "strict": true,
+-    "ignoreDeprecations": "6.0",
+     "baseUrl": ".",
+     "paths": {
+       "@/*": ["./*"]

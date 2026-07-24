@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -52,39 +53,43 @@ export function PricingProvider({ children }: { children: ReactNode }) {
     return unsubscribe;
   }, []);
 
+  const clearQuote = useCallback(() => setQuoteState(initialState), []);
+
+  const requestQuote = useCallback(async (request: PriceQuoteRequest) => {
+    if (request.items.length === 0) {
+      setQuoteState({ error: null, isFetching: false, quote: null });
+      return null;
+    }
+    setQuoteState((current) => ({ ...current, error: null, isFetching: true }));
+    try {
+      const quote = await requestPriceQuote(request);
+      setQuoteState({ error: null, isFetching: false, quote });
+      return quote;
+    } catch (error) {
+      const pricingError: PriceQuoteError =
+        (error as PriceQuoteError) ?? {
+          code: "unavailable",
+          message: "We could not refresh pricing right now.",
+        };
+      setQuoteState({
+        error: pricingError,
+        isFetching: false,
+        quote: null,
+      });
+      return null;
+    }
+  }, []);
+
   const value = useMemo<PricingContextValue>(
     () => ({
-      clearQuote: () => setQuoteState(initialState),
+      clearQuote,
       error: quoteState.error,
       isFetching: quoteState.isFetching,
       quote: quoteState.quote,
-      requestQuote: async (request: PriceQuoteRequest) => {
-        if (request.items.length === 0) {
-          setQuoteState({ error: null, isFetching: false, quote: null });
-          return null;
-        }
-        setQuoteState((current) => ({ ...current, error: null, isFetching: true }));
-        try {
-          const quote = await requestPriceQuote(request);
-          setQuoteState({ error: null, isFetching: false, quote });
-          return quote;
-        } catch (error) {
-          const pricingError: PriceQuoteError =
-            (error as PriceQuoteError) ?? {
-              code: "unavailable",
-              message: "We could not refresh pricing right now.",
-            };
-          setQuoteState({
-            error: pricingError,
-            isFetching: false,
-            quote: null,
-          });
-          return null;
-        }
-      },
+      requestQuote,
       role,
     }),
-    [quoteState, role],
+    [clearQuote, quoteState.error, quoteState.isFetching, quoteState.quote, requestQuote, role],
   );
 
   return <PricingContext.Provider value={value}>{children}</PricingContext.Provider>;

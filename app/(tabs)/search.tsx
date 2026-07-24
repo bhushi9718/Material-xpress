@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -8,7 +8,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -30,6 +29,9 @@ import { useMaterialAssistant } from '@/hooks/use-material-assistant';
 import { useSmartProductSearch } from '@/hooks/use-smart-product-search';
 import type { MaterialAssistantProductRecommendation } from '@/services/assistant/material-assistant-service';
 import type { SearchSuggestion } from '@/services/search/product-search-service';
+import { Input } from '@/components/ui/Input';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
 
 export default function SearchScreen() {
   const { addToCart, quantitiesById, updateQuantity } = useCart();
@@ -74,16 +76,16 @@ export default function SearchScreen() {
   const showSuggestions = hasActiveQuery && suggestions.length > 0;
   const activeCategory = categories.find((category) => category.id === activeCategoryId);
 
-  // Ask the server for a quote that matches the visible results. Fire and
-  // forget -- the UI keeps showing catalog prices until the quote returns.
-  if (results.length > 0) {
-    void requestQuote({
-      items: results.slice(0, 20).map((product) => ({
-        productId: product.id,
-        quantity: quantitiesById[product.id] ?? 1,
-      })),
-    });
-  }
+  useEffect(() => {
+    if (results.length > 0) {
+      void requestQuote({
+        items: results.slice(0, 20).map((product) => ({
+          productId: product.id,
+          quantity: quantitiesById[product.id] ?? 1,
+        })),
+      });
+    }
+  }, [results, quantitiesById, requestQuote]);
 
   async function handleSuggestionPress(suggestion: SearchSuggestion) {
     if (suggestion.kind === 'category' && suggestion.categoryId) {
@@ -128,38 +130,30 @@ export default function SearchScreen() {
             size={14}
           />
           <Text style={styles.roleBannerText}>
-            {roleLabel} pricing � server verified
+            {roleLabel} pricing • server verified
           </Text>
         </View>
       </View>
 
-      <View style={styles.searchBox}>
-        <Ionicons
-          color={materialTheme.colors.textMuted}
-          name="search-outline"
-          size={18}
-        />
-        <TextInput
+      <View style={styles.searchBoxWrapper}>
+        <Input
           autoCapitalize="none"
           autoCorrect={false}
           onChangeText={setQuery}
           onSubmitEditing={() => saveSearchTerm()}
           placeholder="Search drawer slides, locks, screws..."
-          placeholderTextColor={materialTheme.colors.textMuted}
-          style={styles.searchInput}
           value={query}
+          leftIcon={<Ionicons color={materialTheme.colors.textMuted} name="search-outline" size={18} />}
+          rightIcon={
+            isLoading ? (
+              <ActivityIndicator color={materialTheme.colors.primary} size="small" />
+            ) : query ? (
+              <TouchableOpacity onPress={() => setQuery('')}>
+                <Ionicons color={materialTheme.colors.textMuted} name="close-circle" size={20} />
+              </TouchableOpacity>
+            ) : undefined
+          }
         />
-        {isLoading ? (
-          <ActivityIndicator color={materialTheme.colors.primary} size="small" />
-        ) : query ? (
-          <TouchableOpacity onPress={() => setQuery('')}>
-            <Ionicons
-              color={materialTheme.colors.textMuted}
-              name="close-circle"
-              size={20}
-            />
-          </TouchableOpacity>
-        ) : null}
       </View>
 
       <MaterialAssistantPanel
@@ -192,7 +186,7 @@ export default function SearchScreen() {
               <SearchSkeletonCard />
             </View>
           ) : (
-            <View style={styles.emptyCard}>
+            <Card style={styles.emptyCard}>
               <Ionicons
                 color={materialTheme.colors.textMuted}
                 name="search-outline"
@@ -203,16 +197,17 @@ export default function SearchScreen() {
                 Try another keyword, remove a category filter, or use a suggestion below.
               </Text>
               {(hasActiveQuery || activeFilter !== 'all') ? (
-                <TouchableOpacity
+                <Button
+                  label="Reset search"
                   onPress={() => {
                     setActiveFilter('all');
                     setQuery('');
                   }}
-                  style={styles.resetButton}>
-                  <Text style={styles.resetButtonText}>Reset search</Text>
-                </TouchableOpacity>
+                  variant="secondary"
+                  style={{ marginTop: materialTheme.spacing.lg }}
+                />
               ) : null}
-            </View>
+            </Card>
           )
         }
         ListFooterComponent={<View style={styles.footerGap} />}
@@ -246,8 +241,8 @@ export default function SearchScreen() {
                     style={[
                       styles.filterChip,
                       isActive && {
-                        backgroundColor: `${category.accent}18`,
-                        borderColor: category.accent,
+                        backgroundColor: `${category.accent}20`,
+                        borderColor: 'transparent',
                       },
                     ]}>
                     <Text
@@ -263,7 +258,7 @@ export default function SearchScreen() {
             </ScrollView>
 
             {showSuggestions ? (
-              <View style={styles.suggestionCard}>
+              <Card style={styles.suggestionCard}>
                 <SectionHeading title="Instant Suggestions" />
                 {suggestions.map((suggestion) => (
                   <TouchableOpacity
@@ -295,7 +290,7 @@ export default function SearchScreen() {
                     />
                   </TouchableOpacity>
                 ))}
-              </View>
+              </Card>
             ) : null}
 
             {!hasActiveQuery ? (
@@ -360,29 +355,31 @@ export default function SearchScreen() {
           return (
             <Animated.View
               layout={LinearTransition.springify().damping(18).stiffness(220)}
-              style={styles.resultCard}>
-              <ProductIconBadge accent={item.accent} icon={item.icon} size={52} />
-              <View style={styles.resultInfo}>
-                <Text style={styles.resultCategory}>{item.category}</Text>
-                <Text style={styles.resultName}>{item.name}</Text>
-                <Text style={styles.resultSubtitle}>{item.subtitle}</Text>
-                <Text style={styles.resultPrice}>{resolveDisplayPrice(item.id, formatUnitPrice(item)).primary}</Text>
-                {resolveDisplayPrice(item.id, formatUnitPrice(item)).secondary ? (
-                  <Text style={styles.resultPriceStrike}>
-                    {resolveDisplayPrice(item.id, formatUnitPrice(item)).secondary}
-                  </Text>
-                ) : null}
-              </View>
+              style={styles.resultCardWrapper}>
+              <Card style={styles.resultCard}>
+                <ProductIconBadge accent={item.accent} icon={item.icon} size={52} />
+                <View style={styles.resultInfo}>
+                  <Text style={styles.resultCategory}>{item.category}</Text>
+                  <Text style={styles.resultName}>{item.name}</Text>
+                  <Text style={styles.resultSubtitle}>{item.subtitle}</Text>
+                  <Text style={styles.resultPrice}>{resolveDisplayPrice(item.id, formatUnitPrice(item)).primary}</Text>
+                  {resolveDisplayPrice(item.id, formatUnitPrice(item)).secondary ? (
+                    <Text style={styles.resultPriceStrike}>
+                      {resolveDisplayPrice(item.id, formatUnitPrice(item)).secondary}
+                    </Text>
+                  ) : null}
+                </View>
 
-              <QuickOrderControls
-                bulkOptions={[5, 10, 25]}
-                onAddOne={() => addToCart(item)}
-                onBulkAdd={(amount) => addToCart(item, amount)}
-                onDecrease={() => updateQuantity(item.id, quantity - 1)}
-                onIncrease={() => updateQuantity(item.id, quantity + 1)}
-                quantity={quantity}
-                variant="list"
-              />
+                <QuickOrderControls
+                  bulkOptions={[5, 10, 25]}
+                  onAddOne={() => addToCart(item)}
+                  onBulkAdd={(amount) => addToCart(item, amount)}
+                  onDecrease={() => updateQuantity(item.id, quantity - 1)}
+                  onIncrease={() => updateQuantity(item.id, quantity + 1)}
+                  quantity={quantity}
+                  variant="list"
+                />
+              </Card>
             </Animated.View>
           );
         }}
@@ -395,7 +392,7 @@ export default function SearchScreen() {
 
 function SearchSkeletonCard() {
   return (
-    <View style={styles.resultCard}>
+    <Card style={styles.resultCard}>
       <View style={styles.skeletonCircle} />
       <View style={styles.resultInfo}>
         <View style={styles.skeletonLineShort} />
@@ -403,7 +400,7 @@ function SearchSkeletonCard() {
         <View style={styles.skeletonLineMedium} />
       </View>
       <View style={styles.skeletonButton} />
-    </View>
+    </Card>
   );
 }
 
@@ -430,7 +427,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: materialTheme.screenPadding,
-    paddingTop: 10,
+    paddingTop: materialTheme.spacing.md,
   },
   title: {
     ...materialTheme.typography.h1,
@@ -439,49 +436,35 @@ const styles = StyleSheet.create({
   subtitle: {
     ...materialTheme.typography.body,
     color: materialTheme.colors.textMuted,
-    marginTop: 6,
+    marginTop: materialTheme.spacing.sm,
   },
-  searchBox: {
-    alignItems: 'center',
-    backgroundColor: materialTheme.colors.surface,
-    borderColor: materialTheme.colors.border,
-    borderRadius: materialTheme.radius.md,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 10,
+  searchBoxWrapper: {
     marginHorizontal: materialTheme.screenPadding,
-    marginTop: 18,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-  },
-  searchInput: {
-    ...materialTheme.typography.body,
-    color: materialTheme.colors.text,
-    flex: 1,
+    marginTop: materialTheme.spacing.lg,
   },
   content: {
     padding: materialTheme.screenPadding,
-    paddingBottom: 32,
+    paddingBottom: materialTheme.spacing.xxxl,
   },
   resultsList: {
     flex: 1,
-    marginTop: 8,
+    marginTop: materialTheme.spacing.sm,
   },
   loadingGroup: {
-    gap: 12,
-    marginTop: 12,
+    gap: materialTheme.spacing.md,
+    marginTop: materialTheme.spacing.md,
   },
   filterRow: {
-    gap: 10,
-    paddingBottom: 8,
+    gap: materialTheme.spacing.sm,
+    paddingBottom: materialTheme.spacing.sm,
   },
   filterChip: {
     backgroundColor: materialTheme.colors.surface,
     borderColor: materialTheme.colors.border,
     borderRadius: materialTheme.radius.pill,
     borderWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: materialTheme.spacing.lg,
+    paddingVertical: materialTheme.spacing.sm,
   },
   filterChipActive: {
     backgroundColor: materialTheme.colors.primary,
@@ -495,29 +478,25 @@ const styles = StyleSheet.create({
     color: materialTheme.colors.white,
   },
   popularSection: {
-    marginBottom: 20,
-    marginTop: 12,
+    marginBottom: materialTheme.spacing.xl,
+    marginTop: materialTheme.spacing.md,
   },
   suggestionCard: {
-    ...materialTheme.shadow,
-    backgroundColor: materialTheme.colors.surface,
-    borderRadius: materialTheme.radius.lg,
-    marginBottom: 16,
-    marginTop: 12,
-    padding: 16,
+    marginBottom: materialTheme.spacing.lg,
+    marginTop: materialTheme.spacing.md,
   },
   suggestionRow: {
     alignItems: 'center',
     borderBottomColor: materialTheme.colors.border,
     borderBottomWidth: 1,
     flexDirection: 'row',
-    gap: 12,
-    paddingVertical: 14,
+    gap: materialTheme.spacing.md,
+    paddingVertical: materialTheme.spacing.md,
   },
   suggestionIconWrap: {
     alignItems: 'center',
     backgroundColor: materialTheme.colors.primarySoft,
-    borderRadius: 18,
+    borderRadius: materialTheme.radius.md,
     height: 36,
     justifyContent: 'center',
     width: 36,
@@ -532,43 +511,42 @@ const styles = StyleSheet.create({
   suggestionDescription: {
     ...materialTheme.typography.caption,
     color: materialTheme.colors.textMuted,
-    marginTop: 4,
+    marginTop: materialTheme.spacing.xs,
   },
   popularRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: materialTheme.spacing.sm,
   },
   popularChip: {
     alignItems: 'center',
     backgroundColor: materialTheme.colors.surface,
     borderRadius: materialTheme.radius.pill,
     flexDirection: 'row',
-    gap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
+    gap: materialTheme.spacing.sm,
+    paddingHorizontal: materialTheme.spacing.md,
+    paddingVertical: materialTheme.spacing.sm,
   },
   popularChipText: {
     ...materialTheme.typography.caption,
     color: materialTheme.colors.text,
   },
   resultsSummaryCard: {
-    marginBottom: 12,
+    marginBottom: materialTheme.spacing.md,
   },
   resultsSummaryText: {
     ...materialTheme.typography.caption,
     color: materialTheme.colors.textMuted,
-    marginTop: -6,
+    marginTop: -materialTheme.spacing.xs,
+  },
+  resultCardWrapper: {
+    marginBottom: materialTheme.spacing.md,
   },
   resultCard: {
-    ...materialTheme.shadow,
     alignItems: 'flex-start',
-    backgroundColor: materialTheme.colors.surface,
-    borderRadius: materialTheme.radius.md,
     flexDirection: 'row',
-    gap: 14,
-    marginBottom: 12,
-    padding: 16,
+    gap: materialTheme.spacing.md,
+    padding: materialTheme.spacing.lg,
   },
   resultInfo: {
     flex: 1,
@@ -580,22 +558,22 @@ const styles = StyleSheet.create({
   resultName: {
     ...materialTheme.typography.h3,
     color: materialTheme.colors.text,
-    marginTop: 4,
+    marginTop: materialTheme.spacing.xs,
   },
   resultSubtitle: {
     ...materialTheme.typography.caption,
     color: materialTheme.colors.textMuted,
-    marginTop: 6,
+    marginTop: materialTheme.spacing.sm,
   },
   resultPrice: {
     ...materialTheme.typography.label,
     color: materialTheme.colors.primary,
-    marginTop: 10,
+    marginTop: materialTheme.spacing.sm,
   },
   resultPriceStrike: {
     ...materialTheme.typography.caption,
     color: materialTheme.colors.textMuted,
-    marginTop: 2,
+    marginTop: materialTheme.spacing.xs,
     textDecorationLine: 'line-through',
   },
   roleBanner: {
@@ -604,10 +582,10 @@ const styles = StyleSheet.create({
     backgroundColor: materialTheme.colors.primarySoft,
     borderRadius: materialTheme.radius.pill,
     flexDirection: 'row',
-    gap: 8,
-    marginTop: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    gap: materialTheme.spacing.sm,
+    marginTop: materialTheme.spacing.md,
+    paddingHorizontal: materialTheme.spacing.md,
+    paddingVertical: materialTheme.spacing.sm,
   },
   roleBannerText: {
     ...materialTheme.typography.caption,
@@ -615,32 +593,19 @@ const styles = StyleSheet.create({
   },
   emptyCard: {
     alignItems: 'center',
-    backgroundColor: materialTheme.colors.surface,
-    borderRadius: materialTheme.radius.lg,
-    marginTop: 12,
-    padding: 28,
+    marginTop: materialTheme.spacing.md,
+    padding: materialTheme.spacing.xxl,
   },
   emptyTitle: {
     ...materialTheme.typography.h3,
     color: materialTheme.colors.text,
-    marginTop: 12,
+    marginTop: materialTheme.spacing.md,
   },
   emptyText: {
     ...materialTheme.typography.body,
     color: materialTheme.colors.textMuted,
-    marginTop: 8,
+    marginTop: materialTheme.spacing.sm,
     textAlign: 'center',
-  },
-  resetButton: {
-    backgroundColor: materialTheme.colors.primarySoft,
-    borderRadius: materialTheme.radius.pill,
-    marginTop: 18,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  resetButtonText: {
-    ...materialTheme.typography.label,
-    color: materialTheme.colors.primary,
   },
   skeletonCircle: {
     backgroundColor: materialTheme.colors.surfaceMuted,
@@ -658,14 +623,14 @@ const styles = StyleSheet.create({
     backgroundColor: materialTheme.colors.surfaceMuted,
     borderRadius: 999,
     height: 14,
-    marginTop: 8,
+    marginTop: materialTheme.spacing.sm,
     width: '84%',
   },
   skeletonLineMedium: {
     backgroundColor: materialTheme.colors.surfaceMuted,
     borderRadius: 999,
     height: 12,
-    marginTop: 10,
+    marginTop: materialTheme.spacing.sm,
     width: '58%',
   },
   skeletonButton: {
@@ -675,18 +640,6 @@ const styles = StyleSheet.create({
     width: 56,
   },
   footerGap: {
-    height: 24,
+    height: materialTheme.spacing.xxl,
   },
 });
-
-
-
-
-
-
-
-
-
-
-
-

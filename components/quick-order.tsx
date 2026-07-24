@@ -21,6 +21,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatCurrency } from '@/constants/material-data';
 import { materialTheme } from '@/constants/material-theme';
 import { QuantityStepper } from '@/components/material-primitives';
+import { Button } from '@/components/ui/Button';
 
 type QuickOrderControlsProps = {
   bulkOptions?: number[];
@@ -93,16 +94,12 @@ export function QuickOrderControls({
           exiting={FadeOut.duration(120)}
           layout={LinearTransition.springify().damping(18)}
           style={styles.quickOrderPrimaryRow}>
-          <ScaleButton onPress={onAddOne} style={styles.fastAddButton}>
-            <Text style={styles.fastAddButtonText}>
-              {variant === 'list' ? 'Fast add' : 'Add'}
-            </Text>
-            <Ionicons
-              color={materialTheme.colors.white}
-              name="add"
-              size={16}
-            />
-          </ScaleButton>
+          <Button
+            label={variant === 'list' ? 'Fast add' : 'Add'}
+            onPress={onAddOne}
+            icon={<Ionicons color={materialTheme.colors.white} name="add" size={16} />}
+            style={{ flex: 1, paddingVertical: 11 }}
+          />
         </Animated.View>
       )}
 
@@ -224,26 +221,21 @@ export function StickyCheckoutBar({
 
       <View style={styles.checkoutActions}>
         {secondaryActionLabel && onSecondaryAction ? (
-          <ScaleButton
+          <Button
+            label={secondaryActionLabel}
             onPress={onSecondaryAction}
-            style={styles.whatsAppButton}>
-            <Ionicons
-              color={materialTheme.colors.success}
-              name="logo-whatsapp"
-              size={18}
-            />
-            <Text style={styles.whatsAppButtonText}>{secondaryActionLabel}</Text>
-          </ScaleButton>
+            icon={<Ionicons color={materialTheme.colors.success} name="logo-whatsapp" size={18} />}
+            variant="outline"
+            style={{ borderColor: materialTheme.colors.success }}
+            labelStyle={{ color: materialTheme.colors.success }}
+          />
         ) : null}
 
-        <ScaleButton onPress={onCheckout} style={styles.checkoutButton}>
-          <Text style={styles.checkoutButtonText}>Proceed to checkout</Text>
-          <Ionicons
-            color={materialTheme.colors.white}
-            name="arrow-forward"
-            size={18}
-          />
-        </ScaleButton>
+        <Button
+          label="Proceed to checkout"
+          onPress={onCheckout}
+          icon={<Ionicons color={materialTheme.colors.white} name="arrow-forward" size={18} />}
+        />
       </View>
     </Animated.View>
   );
@@ -292,21 +284,6 @@ const styles = StyleSheet.create({
     ...materialTheme.typography.label,
     color: materialTheme.colors.primary,
     marginTop: 2,
-  },
-  fastAddButton: {
-    alignItems: 'center',
-    alignSelf: 'stretch',
-    backgroundColor: materialTheme.colors.primary,
-    borderRadius: materialTheme.radius.pill,
-    flexDirection: 'row',
-    gap: 6,
-    justifyContent: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 11,
-  },
-  fastAddButtonText: {
-    ...materialTheme.typography.label,
-    color: materialTheme.colors.white,
   },
   bulkRow: {
     flexDirection: 'row',
@@ -391,33 +368,5 @@ const styles = StyleSheet.create({
   },
   checkoutActions: {
     gap: 10,
-  },
-  whatsAppButton: {
-    alignItems: 'center',
-    backgroundColor: '#EAF6EF',
-    borderColor: '#C9E7D4',
-    borderRadius: materialTheme.radius.md,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 8,
-    justifyContent: 'center',
-    paddingVertical: 16,
-  },
-  whatsAppButtonText: {
-    ...materialTheme.typography.label,
-    color: materialTheme.colors.success,
-  },
-  checkoutButton: {
-    alignItems: 'center',
-    backgroundColor: materialTheme.colors.primary,
-    borderRadius: materialTheme.radius.md,
-    flexDirection: 'row',
-    gap: 8,
-    justifyContent: 'center',
-    paddingVertical: 16,
-  },
-  checkoutButtonText: {
-    ...materialTheme.typography.label,
-    color: materialTheme.colors.white,
   },
 });

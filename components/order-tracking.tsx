@@ -23,17 +23,8 @@ import {
   type TrackingSource,
   type TrackingTimelineStep,
 } from '@/services/orders/order-tracking-service';
-
-export const orderTrackingPalette = {
-  background: '#07110E',
-  border: '#183028',
-  liveGlow: '#4EE29B',
-  muted: '#8CA298',
-  panel: '#0D1714',
-  panelElevated: '#11201C',
-  text: '#F6F3ED',
-  warning: '#DAB35D',
-};
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
 
 type LiveOrderTrackingCardProps = {
   cityLabel: string;
@@ -80,95 +71,95 @@ export function LiveOrderTrackingCard({
     <Animated.View
       entering={FadeInDown.duration(220)}
       layout={LinearTransition.springify().damping(18).stiffness(220)}
-      style={styles.liveCard}>
-      <View style={styles.liveHeader}>
-        <View style={styles.liveHeaderRow}>
-          <Animated.View style={[styles.liveDot, pulseStyle]} />
-          <Text style={styles.liveHeaderLabel}>Live delivery</Text>
-        </View>
-        <View style={styles.liveBadgeRow}>
-          <View style={styles.cityBadge}>
-            <Text style={styles.cityBadgeText}>{cityLabel}</Text>
+      style={styles.liveCardWrapper}>
+      <Card style={styles.liveCard}>
+        <View style={styles.liveHeader}>
+          <View style={styles.liveHeaderRow}>
+            <Animated.View style={[styles.liveDot, pulseStyle]} />
+            <Text style={styles.liveHeaderLabel}>Live delivery</Text>
           </View>
-          <View
-            style={[
-              styles.sourceBadge,
-              isPreviewMode && styles.sourceBadgePreview,
-            ]}>
-            <Text
+          <View style={styles.liveBadgeRow}>
+            <View style={styles.cityBadge}>
+              <Text style={styles.cityBadgeText}>{cityLabel}</Text>
+            </View>
+            <View
               style={[
-                styles.sourceBadgeText,
-                isPreviewMode && styles.sourceBadgeTextPreview,
+                styles.sourceBadge,
+                isPreviewMode && styles.sourceBadgePreview,
               ]}>
-              {isPreviewMode ? 'Preview sync' : 'Firebase live'}
+              <Text
+                style={[
+                  styles.sourceBadgeText,
+                  isPreviewMode && styles.sourceBadgeTextPreview,
+                ]}>
+                {isPreviewMode ? 'Preview sync' : 'Firebase live'}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        <Text style={styles.orderId}>{order.id}</Text>
+        <Text style={styles.liveUpdate}>{order.liveUpdate}</Text>
+
+        <View style={styles.metricGrid}>
+          <TrackingMetric
+            icon="time-outline"
+            label="Arrival"
+            value={order.etaLabel ?? 'Updating'}
+          />
+          <TrackingMetric
+            icon="business-outline"
+            label="Hub"
+            value={order.hubName}
+          />
+          <TrackingMetric
+            icon="navigate-outline"
+            label="Zone"
+            value={order.deliveryZone}
+          />
+        </View>
+
+        <View style={styles.progressShell}>
+          <View style={styles.progressTrack}>
+            <Animated.View style={[styles.progressFill, progressStyle]} />
+          </View>
+          <View style={styles.progressLabels}>
+            <Text style={styles.progressLabel}>
+              {Math.round(order.progress * 100)}% route complete
             </Text>
+            <Text style={styles.progressUpdateText}>{order.updatedAtLabel}</Text>
           </View>
         </View>
-      </View>
 
-      <Text style={styles.orderId}>{order.id}</Text>
-      <Text style={styles.liveUpdate}>{order.liveUpdate}</Text>
-
-      <View style={styles.metricGrid}>
-        <TrackingMetric
-          icon="time-outline"
-          label="Arrival"
-          value={order.etaLabel ?? 'Updating'}
-        />
-        <TrackingMetric
-          icon="business-outline"
-          label="Hub"
-          value={order.hubName}
-        />
-        <TrackingMetric
-          icon="navigate-outline"
-          label="Zone"
-          value={order.deliveryZone}
-        />
-      </View>
-
-      <View style={styles.progressShell}>
-        <View style={styles.progressTrack}>
-          <Animated.View style={[styles.progressFill, progressStyle]} />
-        </View>
-        <View style={styles.progressLabels}>
-          <Text style={styles.progressLabel}>
-            {Math.round(order.progress * 100)}% route complete
-          </Text>
-          <Text style={styles.progressUpdateText}>{order.updatedAtLabel}</Text>
-        </View>
-      </View>
-
-      {order.rider ? (
-        <View style={styles.riderCard}>
-          <View style={styles.riderAvatar}>
-            <Ionicons
-              color={orderTrackingPalette.liveGlow}
-              name="bicycle-outline"
-              size={18}
-            />
+        {order.rider ? (
+          <View style={styles.riderCard}>
+            <View style={styles.riderAvatar}>
+              <Ionicons
+                color={materialTheme.colors.primary}
+                name="bicycle-outline"
+                size={18}
+              />
+            </View>
+            <View style={styles.riderInfo}>
+              <Text style={styles.riderLabel}>Assigned rider</Text>
+              <Text style={styles.riderName}>{order.rider.name}</Text>
+              <Text style={styles.riderMeta}>
+                {order.rider.vehicleLabel} / {order.rider.zone}
+              </Text>
+            </View>
           </View>
-          <View style={styles.riderInfo}>
-            <Text style={styles.riderLabel}>Assigned rider</Text>
-            <Text style={styles.riderName}>{order.rider.name}</Text>
-            <Text style={styles.riderMeta}>
-              {order.rider.vehicleLabel} / {order.rider.zone}
-            </Text>
+        ) : null}
+
+        <OrderTimeline steps={order.timeline} />
+
+        <View style={styles.liveFooter}>
+          <View>
+            <Text style={styles.footerLabel}>Order total</Text>
+            <Text style={styles.footerValue}>{formatCurrency(order.total)}</Text>
           </View>
+          <Button label="Reorder same kit" onPress={onReorder} />
         </View>
-      ) : null}
-
-      <OrderTimeline steps={order.timeline} />
-
-      <View style={styles.liveFooter}>
-        <View>
-          <Text style={styles.footerLabel}>Order total</Text>
-          <Text style={styles.footerValue}>{formatCurrency(order.total)}</Text>
-        </View>
-        <TouchableOpacity onPress={onReorder} style={styles.reorderButton}>
-          <Text style={styles.reorderButtonText}>Reorder same kit</Text>
-        </TouchableOpacity>
-      </View>
+      </Card>
     </Animated.View>
   );
 }
@@ -185,70 +176,79 @@ export function OrderHistoryCard({
   return (
     <Animated.View
       layout={LinearTransition.springify().damping(18).stiffness(220)}
-      style={styles.historyCard}>
-      <View style={styles.historyHeader}>
-        <View style={styles.historyHeaderInfo}>
-          <Text style={styles.historyOrderId}>{order.id}</Text>
-          <Text style={styles.historyDate}>{order.date}</Text>
+      style={styles.historyCardWrapper}>
+      <Card style={styles.historyCard}>
+        <View style={styles.historyHeader}>
+          <View style={styles.historyHeaderInfo}>
+            <Text style={styles.historyOrderId}>{order.id}</Text>
+            <Text style={styles.historyDate}>{order.date}</Text>
+          </View>
+          <View
+            style={[
+              styles.statusBadge,
+              { backgroundColor: `${order.statusAccent}22` },
+            ]}>
+            <Text style={[styles.statusBadgeText, { color: order.statusAccent }]}>
+              {order.statusLabel}
+            </Text>
+          </View>
         </View>
-        <View
-          style={[
-            styles.statusBadge,
-            { backgroundColor: `${order.statusAccent}22` },
-          ]}>
-          <Text style={[styles.statusBadgeText, { color: order.statusAccent }]}>
-            {order.statusLabel}
-          </Text>
-        </View>
-      </View>
 
-      <Text style={styles.historySummary}>{order.itemSummary}</Text>
-      <View style={styles.historyMetaRow}>
-        <View style={styles.historyMetaChip}>
-          <Ionicons
-            color={orderTrackingPalette.muted}
-            name="layers-outline"
-            size={14}
-          />
-          <Text style={styles.historyMetaText}>{reorderSummary}</Text>
+        <Text style={styles.historySummary}>{order.itemSummary}</Text>
+        <View style={styles.historyMetaRow}>
+          <View style={styles.historyMetaChip}>
+            <Ionicons
+              color={materialTheme.colors.textMuted}
+              name="layers-outline"
+              size={14}
+            />
+            <Text style={styles.historyMetaText}>{reorderSummary}</Text>
+          </View>
         </View>
-      </View>
 
-      {showMiniProgress ? (
-        <View style={styles.historyProgressWrap}>
-          <View style={styles.historyProgressTrack}>
-            <View
-              style={[
-                styles.historyProgressFill,
-                { width: `${Math.max(order.progress, 0.08) * 100}%` },
-              ]}
+        {showMiniProgress ? (
+          <View style={styles.historyProgressWrap}>
+            <View style={styles.historyProgressTrack}>
+              <View
+                style={[
+                  styles.historyProgressFill,
+                  { width: `${Math.max(order.progress, 0.08) * 100}%` },
+                ]}
+              />
+            </View>
+            <Text style={styles.historyProgressText}>
+              {order.etaLabel ?? order.updatedAtLabel}
+            </Text>
+          </View>
+        ) : null}
+
+        <View style={styles.historyFooter}>
+          <View style={styles.historyFooterTopRow}>
+            <View>
+              <Text style={styles.footerLabel}>Order total</Text>
+              <Text style={styles.footerValue}>{formatCurrency(order.total)}</Text>
+            </View>
+            <Button
+              label="Repeat full cart"
+              onPress={onRepeatCart}
+              variant="secondary"
             />
           </View>
-          <Text style={styles.historyProgressText}>
-            {order.etaLabel ?? order.updatedAtLabel}
-          </Text>
-        </View>
-      ) : null}
-
-      <View style={styles.historyFooter}>
-        <View style={styles.historyFooterTopRow}>
-          <View>
-            <Text style={styles.footerLabel}>Order total</Text>
-            <Text style={styles.footerValue}>{formatCurrency(order.total)}</Text>
+          <View style={styles.historyActionRow}>
+            <Button
+              label="Add to current cart"
+              onPress={onReorder}
+              variant="outline"
+              style={{ flex: 1 }}
+            />
+            <Button
+              label="Checkout now"
+              onPress={onCheckout}
+              style={{ flex: 1 }}
+            />
           </View>
-          <TouchableOpacity onPress={onRepeatCart} style={styles.historyRepeatButton}>
-            <Text style={styles.historyRepeatText}>Repeat full cart</Text>
-          </TouchableOpacity>
         </View>
-        <View style={styles.historyActionRow}>
-          <TouchableOpacity onPress={onReorder} style={styles.historySecondaryButton}>
-            <Text style={styles.historySecondaryButtonText}>Add to current cart</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={onCheckout} style={styles.historyCheckoutButton}>
-            <Text style={styles.historyCheckoutButtonText}>Checkout now</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      </Card>
     </Animated.View>
   );
 }
@@ -264,7 +264,7 @@ function TrackingMetric({
 }) {
   return (
     <View style={styles.metricCard}>
-      <Ionicons color={orderTrackingPalette.muted} name={icon} size={16} />
+      <Ionicons color={materialTheme.colors.textMuted} name={icon} size={16} />
       <Text style={styles.metricLabel}>{label}</Text>
       <Text style={styles.metricValue}>{value}</Text>
     </View>
@@ -316,8 +316,8 @@ function OrderTimeline({ steps }: { steps: TrackingTimelineStep[] }) {
 
 const styles = StyleSheet.create({
   cityBadge: {
-    backgroundColor: '#14211D',
-    borderColor: '#1F3A31',
+    backgroundColor: materialTheme.colors.surfaceMuted,
+    borderColor: materialTheme.colors.border,
     borderRadius: materialTheme.radius.pill,
     borderWidth: 1,
     paddingHorizontal: 12,
@@ -325,35 +325,33 @@ const styles = StyleSheet.create({
   },
   cityBadgeText: {
     ...materialTheme.typography.caption,
-    color: orderTrackingPalette.text,
+    color: materialTheme.colors.text,
   },
   footerLabel: {
     ...materialTheme.typography.caption,
-    color: orderTrackingPalette.muted,
+    color: materialTheme.colors.textMuted,
   },
   footerValue: {
     ...materialTheme.typography.h3,
-    color: orderTrackingPalette.text,
+    color: materialTheme.colors.text,
     marginTop: 6,
   },
+  historyCardWrapper: {
+    marginTop: materialTheme.spacing.lg,
+  },
   historyCard: {
-    backgroundColor: orderTrackingPalette.panel,
-    borderColor: orderTrackingPalette.border,
-    borderRadius: materialTheme.radius.lg,
-    borderWidth: 1,
-    marginTop: 16,
-    padding: 18,
+    padding: materialTheme.spacing.lg,
   },
   historyDate: {
     ...materialTheme.typography.caption,
-    color: orderTrackingPalette.muted,
+    color: materialTheme.colors.textMuted,
     marginTop: 5,
   },
   historyFooter: {
-    borderTopColor: orderTrackingPalette.border,
+    borderTopColor: materialTheme.colors.border,
     borderTopWidth: 1,
     gap: 12,
-    marginTop: 18,
+    marginTop: materialTheme.spacing.lg,
     paddingTop: 16,
   },
   historyFooterTopRow: {
@@ -372,20 +370,20 @@ const styles = StyleSheet.create({
   },
   historyOrderId: {
     ...materialTheme.typography.h3,
-    color: orderTrackingPalette.text,
+    color: materialTheme.colors.text,
   },
   historyProgressFill: {
-    backgroundColor: orderTrackingPalette.liveGlow,
+    backgroundColor: materialTheme.colors.primary,
     borderRadius: materialTheme.radius.pill,
     height: '100%',
   },
   historyProgressText: {
     ...materialTheme.typography.caption,
-    color: orderTrackingPalette.muted,
+    color: materialTheme.colors.textMuted,
     marginTop: 8,
   },
   historyProgressTrack: {
-    backgroundColor: '#14211D',
+    backgroundColor: materialTheme.colors.surfaceMuted,
     borderRadius: materialTheme.radius.pill,
     height: 8,
     overflow: 'hidden',
@@ -396,24 +394,12 @@ const styles = StyleSheet.create({
   historyActionRow: {
     flexDirection: 'row',
     gap: 10,
-  },
-  historyCheckoutButton: {
-    alignItems: 'center',
-    backgroundColor: orderTrackingPalette.liveGlow,
-    borderRadius: materialTheme.radius.md,
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  historyCheckoutButtonText: {
-    ...materialTheme.typography.caption,
-    color: '#082316',
+    marginTop: materialTheme.spacing.sm,
   },
   historyMetaChip: {
     alignItems: 'center',
-    backgroundColor: '#14211D',
-    borderColor: '#20352E',
+    backgroundColor: materialTheme.colors.surfaceMuted,
+    borderColor: materialTheme.colors.border,
     borderRadius: materialTheme.radius.pill,
     borderWidth: 1,
     flexDirection: 'row',
@@ -427,59 +413,32 @@ const styles = StyleSheet.create({
   },
   historyMetaText: {
     ...materialTheme.typography.caption,
-    color: orderTrackingPalette.muted,
-  },
-  historyRepeatButton: {
-    backgroundColor: '#183128',
-    borderRadius: materialTheme.radius.md,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  historyRepeatText: {
-    ...materialTheme.typography.caption,
-    color: orderTrackingPalette.liveGlow,
-  },
-  historySecondaryButton: {
-    alignItems: 'center',
-    backgroundColor: '#11201C',
-    borderColor: '#254137',
-    borderRadius: materialTheme.radius.md,
-    borderWidth: 1,
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  historySecondaryButtonText: {
-    ...materialTheme.typography.caption,
-    color: orderTrackingPalette.text,
+    color: materialTheme.colors.textMuted,
   },
   historySummary: {
     ...materialTheme.typography.body,
-    color: orderTrackingPalette.text,
+    color: materialTheme.colors.text,
     marginTop: 16,
   },
   liveBadgeRow: {
     flexDirection: 'row',
     gap: 8,
   },
+  liveCardWrapper: {
+    marginTop: materialTheme.spacing.lg,
+  },
   liveCard: {
-    backgroundColor: orderTrackingPalette.panelElevated,
-    borderColor: '#264339',
-    borderRadius: materialTheme.radius.lg,
-    borderWidth: 1,
-    marginTop: 22,
-    padding: 20,
+    padding: materialTheme.spacing.lg,
   },
   liveDot: {
-    backgroundColor: orderTrackingPalette.liveGlow,
+    backgroundColor: materialTheme.colors.success,
     borderRadius: 5,
     height: 10,
     width: 10,
   },
   liveFooter: {
     alignItems: 'center',
-    borderTopColor: orderTrackingPalette.border,
+    borderTopColor: materialTheme.colors.border,
     borderTopWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -493,7 +452,7 @@ const styles = StyleSheet.create({
   },
   liveHeaderLabel: {
     ...materialTheme.typography.caption,
-    color: orderTrackingPalette.liveGlow,
+    color: materialTheme.colors.success,
     textTransform: 'uppercase',
   },
   liveHeaderRow: {
@@ -503,11 +462,11 @@ const styles = StyleSheet.create({
   },
   liveUpdate: {
     ...materialTheme.typography.body,
-    color: orderTrackingPalette.text,
+    color: materialTheme.colors.text,
     marginTop: 10,
   },
   metricCard: {
-    backgroundColor: '#14211D',
+    backgroundColor: materialTheme.colors.surfaceMuted,
     borderRadius: materialTheme.radius.md,
     flex: 1,
     minWidth: 92,
@@ -521,27 +480,27 @@ const styles = StyleSheet.create({
   },
   metricLabel: {
     ...materialTheme.typography.caption,
-    color: orderTrackingPalette.muted,
+    color: materialTheme.colors.textMuted,
     marginTop: 10,
   },
   metricValue: {
     ...materialTheme.typography.label,
-    color: orderTrackingPalette.text,
+    color: materialTheme.colors.text,
     marginTop: 5,
   },
   orderId: {
     ...materialTheme.typography.h2,
-    color: orderTrackingPalette.text,
+    color: materialTheme.colors.text,
     marginTop: 14,
   },
   progressFill: {
-    backgroundColor: orderTrackingPalette.liveGlow,
+    backgroundColor: materialTheme.colors.primary,
     borderRadius: materialTheme.radius.pill,
     height: '100%',
   },
   progressLabel: {
     ...materialTheme.typography.caption,
-    color: orderTrackingPalette.text,
+    color: materialTheme.colors.text,
   },
   progressLabels: {
     alignItems: 'center',
@@ -553,28 +512,18 @@ const styles = StyleSheet.create({
     marginTop: 18,
   },
   progressTrack: {
-    backgroundColor: '#16241F',
+    backgroundColor: materialTheme.colors.surfaceMuted,
     borderRadius: materialTheme.radius.pill,
     height: 10,
     overflow: 'hidden',
   },
   progressUpdateText: {
     ...materialTheme.typography.caption,
-    color: orderTrackingPalette.muted,
-  },
-  reorderButton: {
-    backgroundColor: orderTrackingPalette.liveGlow,
-    borderRadius: materialTheme.radius.md,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  reorderButtonText: {
-    ...materialTheme.typography.caption,
-    color: '#082316',
+    color: materialTheme.colors.textMuted,
   },
   riderAvatar: {
     alignItems: 'center',
-    backgroundColor: '#13211C',
+    backgroundColor: materialTheme.colors.surfaceMuted,
     borderRadius: materialTheme.radius.pill,
     height: 40,
     justifyContent: 'center',
@@ -582,7 +531,9 @@ const styles = StyleSheet.create({
   },
   riderCard: {
     alignItems: 'center',
-    backgroundColor: '#13211C',
+    backgroundColor: materialTheme.colors.surface,
+    borderColor: materialTheme.colors.border,
+    borderWidth: 1,
     borderRadius: materialTheme.radius.md,
     flexDirection: 'row',
     gap: 12,
@@ -594,36 +545,36 @@ const styles = StyleSheet.create({
   },
   riderLabel: {
     ...materialTheme.typography.caption,
-    color: orderTrackingPalette.muted,
+    color: materialTheme.colors.textMuted,
   },
   riderMeta: {
     ...materialTheme.typography.caption,
-    color: orderTrackingPalette.muted,
+    color: materialTheme.colors.textMuted,
     marginTop: 4,
   },
   riderName: {
     ...materialTheme.typography.label,
-    color: orderTrackingPalette.text,
+    color: materialTheme.colors.text,
     marginTop: 4,
   },
   sourceBadge: {
-    backgroundColor: '#13211C',
-    borderColor: '#1F3A31',
+    backgroundColor: materialTheme.colors.surfaceMuted,
+    borderColor: materialTheme.colors.border,
     borderRadius: materialTheme.radius.pill,
     borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 7,
   },
   sourceBadgePreview: {
-    backgroundColor: '#201B10',
-    borderColor: '#46351A',
+    backgroundColor: materialTheme.colors.surfaceMuted,
+    borderColor: materialTheme.colors.terracotta,
   },
   sourceBadgeText: {
     ...materialTheme.typography.caption,
-    color: orderTrackingPalette.liveGlow,
+    color: materialTheme.colors.primary,
   },
   sourceBadgeTextPreview: {
-    color: orderTrackingPalette.warning,
+    color: materialTheme.colors.terracotta,
   },
   statusBadge: {
     borderRadius: materialTheme.radius.pill,
@@ -639,12 +590,12 @@ const styles = StyleSheet.create({
   },
   timelineDetail: {
     ...materialTheme.typography.caption,
-    color: orderTrackingPalette.muted,
+    color: materialTheme.colors.textMuted,
     marginTop: 5,
   },
   timelineDot: {
-    backgroundColor: '#193026',
-    borderColor: orderTrackingPalette.border,
+    backgroundColor: materialTheme.colors.surfaceMuted,
+    borderColor: materialTheme.colors.border,
     borderRadius: 6,
     borderWidth: 1,
     height: 12,
@@ -652,25 +603,25 @@ const styles = StyleSheet.create({
     width: 12,
   },
   timelineDotCancelled: {
-    backgroundColor: '#3C1714',
-    borderColor: '#76312B',
+    backgroundColor: materialTheme.colors.danger,
+    borderColor: materialTheme.colors.danger,
   },
   timelineDotComplete: {
-    backgroundColor: orderTrackingPalette.liveGlow,
-    borderColor: orderTrackingPalette.liveGlow,
+    backgroundColor: materialTheme.colors.success,
+    borderColor: materialTheme.colors.success,
   },
   timelineDotCurrent: {
-    backgroundColor: orderTrackingPalette.warning,
-    borderColor: orderTrackingPalette.warning,
+    backgroundColor: materialTheme.colors.primary,
+    borderColor: materialTheme.colors.primary,
   },
   timelineLine: {
-    backgroundColor: orderTrackingPalette.border,
+    backgroundColor: materialTheme.colors.border,
     flex: 1,
     marginTop: 6,
     width: 2,
   },
   timelineLineComplete: {
-    backgroundColor: orderTrackingPalette.liveGlow,
+    backgroundColor: materialTheme.colors.success,
   },
   timelineRail: {
     alignItems: 'center',
@@ -682,11 +633,11 @@ const styles = StyleSheet.create({
   },
   timelineTime: {
     ...materialTheme.typography.caption,
-    color: orderTrackingPalette.muted,
+    color: materialTheme.colors.textMuted,
   },
   timelineTitle: {
     ...materialTheme.typography.label,
-    color: orderTrackingPalette.text,
+    color: materialTheme.colors.text,
     flex: 1,
     paddingRight: 12,
   },
